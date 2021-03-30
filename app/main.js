@@ -1,6 +1,6 @@
 import { app, BrowserWindow } from 'electron';
 import { Menu, MenuItem, dialog, ipcMain } from 'electron';
-import { appMenuTemplate } from './appmenu.js';
+import { appMenuTemplate } from 'common/appmenu.js';
 
 /* variable */
 let safeExit = false; //是否可以安全退出
