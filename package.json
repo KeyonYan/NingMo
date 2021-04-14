@@ -54,6 +54,7 @@
     "electron-squirrel-startup": "^1.0.0",
     "node-sass": "^5.0.0",
     "scss": "^0.2.4",
+    "sqlite3": "^5.0.2",
     "vditor": "^3.8.4"
   },
   "devDependencies": {
