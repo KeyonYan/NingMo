@@ -62,10 +62,12 @@ class APP extends React.Component {
       toolbarConfig: {
         hide: true,
       },
+
       cache: {
         enable: false, // 是否使用 localStorage 进行缓存
       },
       hint: {
+        parse: false,
         extend: [
           {
             key: "@",
@@ -76,7 +78,13 @@ class APP extends React.Component {
                 if (item.extension === ".md") {
                   pageList.push({
                     value:
-                      '<a href="' + item.path + '">[' + item.name + "]</a>",
+                      "<a " +
+                      'class="DoubleLink" ' +
+                      'href="' +
+                      item.path +
+                      '">[' +
+                      item.name +
+                      "]</a>",
                     html: item.name,
                   });
                 }
