@@ -9,6 +9,7 @@ import "./resource/vendor/bootstrap/css/bootstrap.min.css";
 import "./resource/css/simple-sidebar.css";
 import SideBar from "./component/sideBar";
 import NavBar from "./component/navBar";
+import Hotkeys from "react-hot-keys";
 const { ipcRenderer } = window.require("electron");
 let vditor = null;
 let treeDirArr = [];
@@ -31,6 +32,7 @@ class APP extends React.Component {
   state = {
     treeDir: "",
     noteContent: "Hello",
+    notePath: "",
   };
 
   constructor(props) {
@@ -51,7 +53,7 @@ class APP extends React.Component {
     // 通知主进程读取path下的文件并返回其内容
     ipcRenderer.invoke("readFile", item).then((result) => {
       //console.log("readFile' ipcResult:" + result);
-      this.setState({ noteContent: result });
+      this.setState({ noteContent: result, notePath: item.path });
     });
   };
 
@@ -124,22 +126,37 @@ class APP extends React.Component {
     });
   }
 
+  onKeyDown(keyName, e, handle) {
+    console.log("test:onKeyDown", e, handle);
+    // 发送至主进程并告知保存
+    this.setState({ noteContent: vditor.getValue() });
+    var item = {
+      path: this.state.notePath,
+      content: this.state.noteContent,
+    };
+    // console.log("saveFile path:", item.path);
+    // console.log("saveFile content:", item.content);
+    ipcRenderer.invoke("saveFile", item);
+  }
+
   render() {
     if (vditor !== null) {
       vditor.setValue(this.state.noteContent);
     }
     return (
       <div className="d-flex" id="wrapper">
-        <SideBar
-          treeDir={this.state.treeDir}
-          onReadFile={this.handleReadFile}
-        />
-        <div id="page-content-wrapper">
-          <NavBar />
-          <div className="container-fluid">
-            <div id="vditor"></div>
+        <Hotkeys keyName="ctrl+s" onKeyDown={this.onKeyDown.bind(this)}>
+          <SideBar
+            treeDir={this.state.treeDir}
+            onReadFile={this.handleReadFile}
+          />
+          <div id="page-content-wrapper">
+            <NavBar />
+            <div className="container-fluid">
+              <div id="vditor"></div>
+            </div>
           </div>
-        </div>
+        </Hotkeys>
       </div>
     );
   }

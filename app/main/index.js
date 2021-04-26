@@ -10,6 +10,12 @@ function readFile(path) {
   return data;
 }
 
+function saveFile(path, content) {
+  console.log("saveFile path", path);
+  console.log("saveFile content", content);
+  fs.writeFileSync(path, content, "utf-8");
+}
+
 app.on("ready", () => {
   let win = new BrowserWindow({
     width: 800,
@@ -27,12 +33,13 @@ app.on("ready", () => {
   }
 
   ipcMain.handle("readFile", async (event, item) => {
-    // console.log(
-    //   "MainProcess: Receive data from channel 'readFile', data:" + item
-    // );
+    // 读取item.path路径下的md文件并返回给渲染进程
     const result = await readFile(item.path);
-    //console.log("MainProcess: readFile result " + result);
     return result;
+  });
+  ipcMain.handle("saveFile", async (event, item) => {
+    // 保存item.path路径下的md文件并通知渲染进程
+    saveFile(item.path, item.content);
   });
 
   dialog
