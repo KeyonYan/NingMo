@@ -7,18 +7,43 @@ import TreeView from "@material-ui/lab/TreeView";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 import TreeItem from "@material-ui/lab/TreeItem";
+const { ipcRenderer } = window.require("electron");
+let nodeIdIndex = 1;
 
 class SideBar extends React.Component {
   state = {};
 
+  /* renderTreeItems = (treeDirArr) =>
+    treeDirArr.map((item) => {
+      console.log("render index:" + nodeIdIndex);
+      console.log("render item: " + item);
+      nodeIdIndex = nodeIdIndex + 1;
+      if (item.type === "directory") {
+        return (
+          <TreeItem
+            key={nodeIdIndex + ""}
+            nodeId={nodeIdIndex + ""}
+            label={item.name}
+          >
+            {() => this.renderTreeItems(item.children)}
+          </TreeItem>
+        );
+      }
+      return (
+        <TreeItem
+          key={nodeIdIndex + ""}
+          nodeId={nodeIdIndex + ""}
+          label={item.name}
+        />
+      );
+    }); */
+
   render() {
-    let nodeIdIndex = 1;
     let treeDirArr = [];
-    console.log("[SideBar]" + this.props.treeDir.children);
     for (let i in this.props.treeDir.children) {
       treeDirArr.push(this.props.treeDir.children[i]);
     }
-    console.log(treeDirArr);
+    // console.log("renderStart");
     return (
       <div className="bg-light border-right" id="sidebar-wrapper">
         <div className="sidebar-heading">New Page</div>
@@ -28,35 +53,51 @@ class SideBar extends React.Component {
           defaultExpandIcon={<ChevronRightIcon />}
         >
           {treeDirArr.map((item) => {
+            //console.log("render index:" + nodeIdIndex);
+            //console.log("render item: " + item);
             nodeIdIndex = nodeIdIndex + 1;
             if (item.type === "directory") {
               return (
                 <TreeItem
-                  nodeId={nodeIdIndex + ""}
                   key={nodeIdIndex + ""}
+                  nodeId={nodeIdIndex + ""}
                   label={item.name}
                 >
-                  {item.children.map((subItem) => {
+                  {item.children.map((item) => {
+                    // console.log("render index:" + nodeIdIndex);
+                    // console.log("render item: " + item);
                     nodeIdIndex = nodeIdIndex + 1;
+                    if (item.type === "directory") {
+                      return (
+                        <TreeItem
+                          key={nodeIdIndex + ""}
+                          nodeId={nodeIdIndex + ""}
+                          label={item.name}
+                        >
+                          {() => this.renderTreeItems(item.children)}
+                        </TreeItem>
+                      );
+                    }
                     return (
                       <TreeItem
-                        nodeId={nodeIdIndex + ""}
                         key={nodeIdIndex + ""}
-                        label={subItem.name}
+                        nodeId={nodeIdIndex + ""}
+                        label={item.name}
+                        onClick={() => this.props.onReadFile(item)}
                       />
                     );
                   })}
                 </TreeItem>
               );
-            } else {
-              return (
-                <TreeItem
-                  nodeId={nodeIdIndex + ""}
-                  key={nodeIdIndex + ""}
-                  label={item.name}
-                />
-              );
             }
+            return (
+              <TreeItem
+                key={nodeIdIndex + ""}
+                nodeId={nodeIdIndex + ""}
+                label={item.name}
+                onClick={() => this.props.onReadFile(item)}
+              />
+            );
           })}
         </TreeView>
       </div>

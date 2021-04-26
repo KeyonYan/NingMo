@@ -10,24 +10,54 @@ import "./resource/css/simple-sidebar.css";
 import SideBar from "./component/sideBar";
 import NavBar from "./component/navBar";
 const { ipcRenderer } = window.require("electron");
+let vditor = null;
+let treeDirArr = [];
+
+function updateTreeDirArr(treeDir) {
+  if (treeDir === null) return;
+  if (treeDir.children === null) return;
+  if (treeDir.children.length === 0) return;
+  for (let i in treeDir.children) {
+    if (treeDir.children[i].type === "directory") {
+      updateTreeDirArr(treeDir.children[i]);
+    }
+    if (treeDir.children[i].extension === ".md") {
+      treeDirArr.push(treeDir.children[i]);
+    }
+  }
+}
 
 class APP extends React.Component {
   state = {
     treeDir: "",
+    noteContent: "Hello",
   };
 
   constructor(props) {
     super(props);
     // 绑定监听器
     ipcRenderer.on("updateSideBar", (event, args) => {
-      console.log("args:" + args);
+      //console.log("args:" + args);
       this.setState({ treeDir: args });
     });
   }
 
-  // 组件渲染后调用
+  handleReadFile = (item) => {
+    if (item.type !== "file") {
+      console.log("onClick item is not a file");
+      return;
+    }
+    console.log("handleClick item:" + item);
+    // 通知主进程读取path下的文件并返回其内容
+    ipcRenderer.invoke("readFile", item).then((result) => {
+      //console.log("readFile' ipcResult:" + result);
+      this.setState({ noteContent: result });
+    });
+  };
+
   componentDidMount() {
-    const vditor = new Vditor("vditor", {
+    const { noteContent } = this.state;
+    vditor = new Vditor("vditor", {
       height: 800,
       toolbarConfig: {
         hide: true,
@@ -40,20 +70,17 @@ class APP extends React.Component {
           {
             key: "@",
             hint: (key) => {
-              let pageList = [
-                {
-                  value: '<a href="./Page1">Page1</a>',
-                  html: "Page1",
-                },
-                {
-                  value: '<a href="./Page2">Page2</a>',
-                  html: "Page2",
-                },
-                {
-                  value: '<a href="./Page3">Page3</a>',
-                  html: "Page3",
-                },
-              ];
+              updateTreeDirArr(this.state.treeDir);
+              let pageList = [];
+              for (let item of treeDirArr) {
+                if (item.extension === ".md") {
+                  pageList.push({
+                    value:
+                      '<a href="' + item.path + '">[' + item.name + "]</a>",
+                    html: item.name,
+                  });
+                }
+              }
               let popupShowList = [];
               for (let pageItem of pageList) {
                 if (pageItem.html.indexOf(key.toLocaleLowerCase()) > -1) {
@@ -80,7 +107,7 @@ class APP extends React.Component {
       },
       after() {
         // 编辑器异步渲染完成后的回调方法
-        vditor.setValue("Hello, Vditor + React!");
+        vditor.setValue(noteContent);
       },
       input(string) {
         // 输入后触发 | string: 整个编辑框内的字符串值
@@ -90,9 +117,15 @@ class APP extends React.Component {
   }
 
   render() {
+    if (vditor !== null) {
+      vditor.setValue(this.state.noteContent);
+    }
     return (
       <div className="d-flex" id="wrapper">
-        <SideBar treeDir={this.state.treeDir} />
+        <SideBar
+          treeDir={this.state.treeDir}
+          onReadFile={this.handleReadFile}
+        />
         <div id="page-content-wrapper">
           <NavBar />
           <div className="container-fluid">
