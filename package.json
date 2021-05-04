@@ -49,6 +49,7 @@
     }
   },
   "dependencies": {
+    "echarts-for-react": "^3.0.1",
     "electron-compile": "^6.4.4",
     "electron-is-dev": "^2.0.0",
     "electron-squirrel-startup": "^1.0.0",

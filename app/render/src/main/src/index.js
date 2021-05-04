@@ -9,7 +9,8 @@ import "./resource/vendor/bootstrap/css/bootstrap.min.css";
 import "./resource/css/simple-sidebar.css";
 import SideBar from "./component/sideBar";
 import NavBar from "./component/navBar";
-import Hotkeys from "react-hot-keys";
+import Graph from "./component/graph";
+// import Hotkeys from "react-hot-keys";
 const { ipcRenderer } = window.require("electron");
 
 let treeDirArr = [];
@@ -100,7 +101,6 @@ class APP extends React.Component {
             "content-theme",
             "export",
             "outline",
-            "preview",
             "devtools",
             "info",
             "help",
@@ -127,6 +127,18 @@ class APP extends React.Component {
           },
         },
       ],
+      preview: {
+        parse(HTMLElement) {
+          // 预览回调
+          console.log("HTMLElement:" + HTMLElement);
+          return HTMLElement;
+        },
+        transform(string) {
+          // 渲染之前回调
+          console.log("transform string:" + string);
+          return string;
+        },
+      },
       toolbarConfig: {
         hide: true,
       },
@@ -171,6 +183,7 @@ class APP extends React.Component {
       after: () => {
         // 编辑器异步渲染完成后的回调方法
         editor.setValue(this.state.noteContent);
+        console.log("after() call");
       },
     });
     return editor;
@@ -209,6 +222,7 @@ class APP extends React.Component {
             <div id="vditor"></div>
           </div>
         </div>
+        <Graph />
       </div>
     );
   }
