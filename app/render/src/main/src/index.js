@@ -11,7 +11,7 @@ import SideBar from "./component/sideBar";
 import NavBar from "./component/navBar";
 import Hotkeys from "react-hot-keys";
 const { ipcRenderer } = window.require("electron");
-let vditor = null;
+
 let treeDirArr = [];
 
 function updateTreeDirArr(treeDir) {
@@ -31,9 +31,10 @@ function updateTreeDirArr(treeDir) {
 class APP extends React.Component {
   state = {
     treeDir: "",
-    noteContent: "Hello",
+    noteContent: "",
     notePath: "",
   };
+  editor = null;
 
   constructor(props) {
     super(props);
@@ -57,14 +58,78 @@ class APP extends React.Component {
     });
   };
 
-  componentDidMount() {
-    const { noteContent } = this.state;
-    vditor = new Vditor("vditor", {
+  createEditor = () => {
+    let that = this;
+    const editor = new Vditor("vditor", {
       height: 800,
+      mode: "ir",
+      placeholder: "React Vditor",
+      toolbar: [
+        "emoji",
+        "headings",
+        "bold",
+        "italic",
+        "link",
+        "|",
+        "list",
+        "ordered-list",
+        "check",
+        "outdent",
+        "indent",
+        "|",
+        "quote",
+        "line",
+        "code",
+        "inline-code",
+        "insert-before",
+        "insert-after",
+        "|",
+        "upload",
+        "table",
+        "|",
+        "undo",
+        "redo",
+        "|",
+        "fullscreen",
+        "edit-mode",
+        {
+          name: "more",
+          toolbar: [
+            "both",
+            "code-theme",
+            "content-theme",
+            "export",
+            "outline",
+            "preview",
+            "devtools",
+            "info",
+            "help",
+          ],
+        },
+        "|",
+        {
+          hotkey: "⌘S",
+          name: "save",
+          tipPosition: "s",
+          tip: "保存",
+          className: "right",
+          icon: `<img style="height: 16px" src='https://img.58cdn.com.cn/escstatic/docs/imgUpload/idocs/save.svg'/>`,
+          click() {
+            // 发送至主进程并告知保存
+            that.setState({ noteContent: that.editor.getValue() });
+            var item = {
+              path: that.state.notePath,
+              content: that.state.noteContent,
+            };
+            // console.log("saveFile path:", item.path);
+            // console.log("saveFile content:", item.content);
+            ipcRenderer.invoke("saveFile", item);
+          },
+        },
+      ],
       toolbarConfig: {
         hide: true,
       },
-
       cache: {
         enable: false, // 是否使用 localStorage 进行缓存
       },
@@ -103,33 +168,22 @@ class APP extends React.Component {
           },
         ],
       },
-      preview: {
-        parse(HTMLElement) {
-          // 预览回调
-          console.log("HTMLElement:" + HTMLElement);
-          return HTMLElement;
-        },
-        transform(string) {
-          // 渲染之前回调
-          console.log("transform string:" + string);
-          return string;
-        },
-      },
-      after() {
+      after: () => {
         // 编辑器异步渲染完成后的回调方法
-        vditor.setValue(noteContent);
-      },
-      input(string) {
-        // 输入后触发 | string: 整个编辑框内的字符串值
-        console.log("string:" + string);
+        editor.setValue(this.state.noteContent);
       },
     });
+    return editor;
+  };
+
+  componentDidMount() {
+    this.editor = this.createEditor();
   }
 
   onKeyDown(keyName, e, handle) {
     console.log("test:onKeyDown", e, handle);
     // 发送至主进程并告知保存
-    this.setState({ noteContent: vditor.getValue() });
+    this.setState({ noteContent: this.editor.getValue() });
     var item = {
       path: this.state.notePath,
       content: this.state.noteContent,
@@ -140,12 +194,12 @@ class APP extends React.Component {
   }
 
   render() {
-    if (vditor !== null) {
-      vditor.setValue(this.state.noteContent);
+    if (this.editor !== null) {
+      this.editor.setValue(this.state.noteContent);
     }
     return (
       <div className="d-flex" id="wrapper">
-        <Hotkeys keyName="ctrl+s" onKeyDown={this.onKeyDown.bind(this)}>
+        <Hotkeys keyName="ctrl+j" onKeyDown={this.onKeyDown.bind(this)}>
           <SideBar
             treeDir={this.state.treeDir}
             onReadFile={this.handleReadFile}
