@@ -199,18 +199,16 @@ class APP extends React.Component {
     }
     return (
       <div className="d-flex" id="wrapper">
-        <Hotkeys keyName="ctrl+j" onKeyDown={this.onKeyDown.bind(this)}>
-          <SideBar
-            treeDir={this.state.treeDir}
-            onReadFile={this.handleReadFile}
-          />
-          <div id="page-content-wrapper">
-            <NavBar />
-            <div className="container-fluid">
-              <div id="vditor"></div>
-            </div>
+        <SideBar
+          treeDir={this.state.treeDir}
+          onReadFile={this.handleReadFile}
+        />
+        <div id="page-content-wrapper">
+          <NavBar />
+          <div className="container-fluid">
+            <div id="vditor"></div>
           </div>
-        </Hotkeys>
+        </div>
       </div>
     );
   }
