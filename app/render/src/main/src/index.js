@@ -10,9 +10,11 @@ import "./resource/css/simple-sidebar.css";
 import SideBar from "./component/sideBar";
 import NavBar from "./component/navBar";
 import Graph from "./component/graph";
+import { LocalConvenienceStoreOutlined } from "@material-ui/icons";
 // import Hotkeys from "react-hot-keys";
 const { ipcRenderer } = window.require("electron");
 
+const CLASS_DOUBLELINK = "DoubleLink";
 let treeDirArr = [];
 
 function updateTreeDirArr(treeDir) {
@@ -57,6 +59,10 @@ class APP extends React.Component {
       //console.log("readFile' ipcResult:" + result);
       this.setState({ noteContent: result, notePath: item.path });
     });
+  };
+
+  handleDoubleLinkClick = () => {
+    console.log("doublelink click");
   };
 
   createEditor = () => {
@@ -115,6 +121,7 @@ class APP extends React.Component {
           className: "right",
           icon: `<img style="height: 16px" src='https://img.58cdn.com.cn/escstatic/docs/imgUpload/idocs/save.svg'/>`,
           click() {
+            console.log("save");
             // 发送至主进程并告知保存
             that.setState({ noteContent: that.editor.getValue() });
             var item = {
@@ -124,6 +131,18 @@ class APP extends React.Component {
             // console.log("saveFile path:", item.path);
             // console.log("saveFile content:", item.content);
             ipcRenderer.invoke("saveFile", item);
+            // 双链绑定事件监听器
+            const views = document.getElementsByClassName("DoubleLink");
+            console.log("views: ", views);
+            for (let i = 0; i < views.length; i++) {
+              views[i].addEventListener("click", (event) => {
+                console.log("click111");
+                const element = event.target;
+                const path = element.href;
+                window.open(path);
+                // TODO
+              });
+            }
           },
         },
       ],
@@ -146,10 +165,10 @@ class APP extends React.Component {
         enable: false, // 是否使用 localStorage 进行缓存
       },
       hint: {
-        parse: false,
+        parse: true,
         extend: [
           {
-            key: "@",
+            key: "%",
             hint: (key) => {
               updateTreeDirArr(this.state.treeDir);
               let pageList = [];
@@ -158,10 +177,11 @@ class APP extends React.Component {
                   pageList.push({
                     value:
                       "<a " +
-                      'class="DoubleLink" ' +
-                      'href="' +
+                      "class='" +
+                      CLASS_DOUBLELINK +
+                      "'href='" +
                       item.path +
-                      '">[' +
+                      "'>[" +
                       item.name +
                       "]</a>",
                     html: item.name,
@@ -180,10 +200,107 @@ class APP extends React.Component {
           },
         ],
       },
+      input(data) {
+        console.log("input() call");
+        console.log("data[data.length-2]: ", data[data.length - 2]);
+        const editorView = document.activeElement;
+        const selection = window.getSelection();
+        let range = selection.getRangeAt(0); // 记录当前光标位置，之后用
+        const lastChar = data[data.length - 2];
+        if (lastChar === "@") {
+          // 1. 触发弹窗列表
+          // TODO
+          // 2. 列表项回车触发 内容复制到粘贴板 再调用粘贴命令 内容粘贴到编辑器
+          var inputView = document.getElementById("tempInput");
+          inputView.value = "[测试数据](111)";
+          inputView.focus();
+          if (inputView.setSelectionRange) {
+            inputView.setSelectionRange(0, inputView.value.length);
+          } else {
+            //获取光标起始位置到结束位置
+            inputView.select();
+          }
+          try {
+            var flag = document.execCommand("copy"); //执行复制
+          } catch (error) {
+            console.log(error);
+            var flag = false;
+          }
+          editorView.focus();
+          selection.removeAllRanges(); // 删除所有选取范围
+          selection.addRange(range); // 添加一个选取范围（移动光标到最后）
+
+          // 粘贴内容
+          document.execCommand("Paste");
+        }
+      },
       after: () => {
         // 编辑器异步渲染完成后的回调方法
-        editor.setValue(this.state.noteContent);
         console.log("after() call");
+        this.editor.vditor.lute.SetJSRenderers({
+          renderers: {
+            Md2VditorIRDOM: {
+              // 请根据不同的模式选择不同的渲染对象
+              renderLinkDest: (node, entering) => {
+                if (entering) {
+                  this.myLink = node.TokensStr();
+                  return [``, window.Lute.WalkContinue];
+                }
+                return [``, window.Lute.WalkContinue];
+              },
+              renderLink: (node, entering) => {
+                if (entering) {
+                  return [``, window.Lute.WalkContinue];
+                } else {
+                  return [
+                    `<a href='${this.myLink}' my-attr='自定义属性' class="` +
+                      CLASS_DOUBLELINK +
+                      `">${node.Text()}</a>`,
+                    window.Lute.WalkContinue,
+                  ];
+                  // <a href='http://mihaotu.com' my-attr='自定义属性'>觅好图</a>
+                }
+              },
+              renderLinkText: (node, entering) => {
+                if (entering) {
+                  return ["", window.Lute.WalkContinue];
+                } else {
+                  return ["", window.Lute.WalkContinue];
+                }
+              },
+              renderOpenBracket: (node, entering) => {
+                if (entering) {
+                  return ["", window.Lute.WalkContinue];
+                } else {
+                  return ["", window.Lute.WalkContinue];
+                }
+              },
+              renderCloseBracket: (node, entering) => {
+                if (entering) {
+                  return ["", window.Lute.WalkContinue];
+                } else {
+                  return ["", window.Lute.WalkContinue];
+                }
+              },
+              renderOpenParen: (node, entering) => {
+                if (entering) {
+                  return ["", window.Lute.WalkContinue];
+                } else {
+                  return ["", window.Lute.WalkContinue];
+                }
+              },
+              renderCloseParen: (node, entering) => {
+                if (entering) {
+                  return ["", window.Lute.WalkContinue];
+                } else {
+                  return ["", window.Lute.WalkContinue];
+                }
+              },
+            },
+          },
+        });
+
+        editor.setValue(this.state.noteContent);
       },
     });
     return editor;
@@ -223,6 +340,7 @@ class APP extends React.Component {
           </div>
         </div>
         <Graph />
+        <input id="tempInput"></input>
       </div>
     );
   }
