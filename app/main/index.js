@@ -4,7 +4,9 @@ const path = require("path");
 const dialog = require("electron").dialog;
 const dirTree = require("../common/directory-tree");
 const fs = require("fs");
-
+var Datastore = require("nedb");
+var db = new Datastore({ filename: "data.db", autoload: true });
+let treeDir = null;
 let linkRelation = {
   nodes: [],
   links: [],
@@ -59,22 +61,16 @@ function insertNode(path, rootFolder) {
   const res = path.split("\\");
   let categories = "";
   for (var i = 0; i < res.length; i++) {
-    console.log("res[i]: ", res[i]);
     if (rootFolder === res[i]) {
       // 如果是根目录下的md，其分类设为其他
-      console.log("i: ", i, " len: ", res.length - 2);
       if (i === res.length - 2) {
-        console.log("equal");
         categories = res[i];
       } else {
-        console.log("not equal");
         categories = res[i + 1];
       }
       break;
     }
   }
-  console.log("path: ", path);
-  console.log("categories: ", categories);
   let categoriesIndex = findCategoriesIndexByName(categories);
   if (categoriesIndex === -1) categoriesIndex = 0;
   linkRelation.nodes.push({
@@ -168,6 +164,22 @@ app.on("ready", () => {
     saveFile(item.path, item.content);
   });
 
+  /* db.find({ type: "treeDir" }, function (err, docs) {
+    if (docs.length !== 0) {
+      console.log("treeDir from DB: ", docs[0].value);
+      win.webContents.send("updateSideBar", docs[0].value);
+    }
+  });
+  db.find({ type: "linkRelation" }, function (err, docs) {
+    if (docs.length !== 0) {
+      console.log("linkRelation from DB: ", docs[0].value);
+      win.webContents.send("linkRelation", docs[0].value);
+    }
+  }); */
+
+  db.remove({ type: "treeDir" });
+  db.remove({ type: "linkRelation" });
+
   dialog
     .showOpenDialog({
       title: "请选择目录",
@@ -176,12 +188,26 @@ app.on("ready", () => {
     .then((result) => {
       // get dirTree and send to renderer
       const path = result.filePaths[0];
-      const treeDir = dirTree(path);
+      treeDir = dirTree(path);
       //console.log(treeDir);
       win.webContents.send("updateSideBar", treeDir);
 
       analyseLinkRelation(treeDir);
       win.webContents.send("linkRelation", linkRelation);
+      var doc = {
+        type: "treeDir",
+        value: treeDir,
+      };
+      db.insert(doc, function (err, newDoc) {
+        console.log("insert treeDir to neDB");
+      });
+      doc = {
+        type: "linkRelation",
+        value: linkRelation,
+      };
+      db.insert(doc, function (err, newDoc) {
+        console.log("insert linkRelation to neDB");
+      });
     })
     .catch((error) => {
       console.log(error);

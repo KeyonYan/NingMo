@@ -172,7 +172,7 @@ class APP extends React.Component {
         parse: true,
         extend: [
           {
-            key: "%",
+            key: "@",
             hint: (key) => {
               updateTreeDirArr(this.state.treeDir);
               let pageList = [];
@@ -206,12 +206,12 @@ class APP extends React.Component {
       },
       input(data) {
         console.log("input() call");
-        console.log("data[data.length-2]: ", data[data.length - 2]);
         const editorView = document.activeElement;
         const selection = window.getSelection();
         let range = selection.getRangeAt(0); // 记录当前光标位置，之后用
         const lastChar = data[data.length - 2];
-        if (lastChar === "@") {
+        console.log("lastChar: ", lastChar);
+        if (lastChar === "%") {
           // 1. 触发弹窗列表
           // TODO
           // 2. 列表项回车触发 内容复制到粘贴板 再调用粘贴命令 内容粘贴到编辑器
@@ -256,17 +256,23 @@ class APP extends React.Component {
                 if (entering) {
                   return [``, window.Lute.WalkContinue];
                 } else {
-                  if (this.flagDoubleLink === true) {
-                    this.flagDoubleLink = false;
-                    return [
-                      `<a href='${this.myLink}' my-attr='自定义属性' class="` +
-                        CLASS_DOUBLELINK +
-                        `">${node.Text()}</a>`,
-                      window.Lute.WalkContinue,
-                    ];
+                  if (this.myText !== null) {
+                    if (
+                      this.myText[0] === "[" &&
+                      this.myText[this.myText.length - 1] === "]"
+                    ) {
+                      return [
+                        `<a href='${this.myLink}' my-attr='自定义属性' class="` +
+                          CLASS_DOUBLELINK +
+                          `">${node.Text()}</a>`,
+                        window.Lute.WalkContinue,
+                      ];
+                    }
                   } else {
                     return [
-                      `<a href='${this.myLink}'>${node.Text()}</a>`,
+                      `<a href='${
+                        this.myLink
+                      }' my-attr='自定义属性'>${node.Text()}</a>`,
                       window.Lute.WalkContinue,
                     ];
                   }
@@ -281,15 +287,7 @@ class APP extends React.Component {
               },
               renderLinkText: (node, entering) => {
                 if (entering) {
-                  const text = node.TokensStr();
-                  if (
-                    text !== null &&
-                    text.length > 0 &&
-                    text[0] === "[" &&
-                    text[text.length - 1] === "]"
-                  ) {
-                    this.flagDoubleLink = true;
-                  }
+                  this.myText = node.TokensStr();
                   return ["", window.Lute.WalkContinue];
                 } else {
                   return ["", window.Lute.WalkContinue];
