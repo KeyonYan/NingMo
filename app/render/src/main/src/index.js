@@ -36,6 +36,7 @@ class APP extends React.Component {
     treeDir: "",
     noteContent: "",
     notePath: "",
+    linkRelation: "",
   };
   editor = null;
 
@@ -45,6 +46,9 @@ class APP extends React.Component {
     ipcRenderer.on("updateSideBar", (event, args) => {
       //console.log("args:" + args);
       this.setState({ treeDir: args });
+    });
+    ipcRenderer.on("linkRelation", (event, args) => {
+      this.setState({ linkRelation: args });
     });
   }
 
@@ -132,7 +136,7 @@ class APP extends React.Component {
             // console.log("saveFile content:", item.content);
             ipcRenderer.invoke("saveFile", item);
             // 双链绑定事件监听器
-            const views = document.getElementsByClassName("DoubleLink");
+            const views = document.getElementsByClassName(CLASS_DOUBLELINK);
             console.log("views: ", views);
             for (let i = 0; i < views.length; i++) {
               views[i].addEventListener("click", (event) => {
@@ -252,24 +256,40 @@ class APP extends React.Component {
                 if (entering) {
                   return [``, window.Lute.WalkContinue];
                 } else {
-                  return [
-                    `<a href='${this.myLink}' my-attr='自定义属性' class="` +
-                      CLASS_DOUBLELINK +
-                      `">${node.Text()}</a>`,
-                    window.Lute.WalkContinue,
-                  ];
-                  // <a href='http://mihaotu.com' my-attr='自定义属性'>觅好图</a>
+                  if (this.flagDoubleLink === true) {
+                    this.flagDoubleLink = false;
+                    return [
+                      `<a href='${this.myLink}' my-attr='自定义属性' class="` +
+                        CLASS_DOUBLELINK +
+                        `">${node.Text()}</a>`,
+                      window.Lute.WalkContinue,
+                    ];
+                  } else {
+                    return [
+                      `<a href='${this.myLink}'>${node.Text()}</a>`,
+                      window.Lute.WalkContinue,
+                    ];
+                  }
                 }
               },
-              renderLinkText: (node, entering) => {
+              renderOpenBracket: (node, entering) => {
                 if (entering) {
                   return ["", window.Lute.WalkContinue];
                 } else {
                   return ["", window.Lute.WalkContinue];
                 }
               },
-              renderOpenBracket: (node, entering) => {
+              renderLinkText: (node, entering) => {
                 if (entering) {
+                  const text = node.TokensStr();
+                  if (
+                    text !== null &&
+                    text.length > 0 &&
+                    text[0] === "[" &&
+                    text[text.length - 1] === "]"
+                  ) {
+                    this.flagDoubleLink = true;
+                  }
                   return ["", window.Lute.WalkContinue];
                 } else {
                   return ["", window.Lute.WalkContinue];
@@ -339,7 +359,7 @@ class APP extends React.Component {
             <div id="vditor"></div>
           </div>
         </div>
-        <Graph />
+        <Graph linkRelation={this.state.linkRelation} />
         <input id="tempInput"></input>
       </div>
     );

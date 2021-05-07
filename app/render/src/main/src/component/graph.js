@@ -15,7 +15,7 @@ class Graph extends Component {
   }
 
   render() {
-    const jsonData = {
+    /* const linkRelation = {
       nodes: [
         {
           id: "0",
@@ -67,7 +67,13 @@ class Graph extends Component {
           name: "类目1",
         },
       ],
-    };
+    }; */
+    console.log("this.props.linkRelation: ", this.props.linkRelation);
+    let linkRelation = this.props.linkRelation;
+    let legendData = [];
+    for (let i in linkRelation.categories) {
+      legendData.push(linkRelation.categories[i].name);
+    }
     const option = {
       title: {
         text: "知识图谱",
@@ -76,21 +82,26 @@ class Graph extends Component {
       },
       legend: [
         {
-          data: jsonData.categories.map(function (a) {
-            return a.name;
-          }),
+          data: legendData,
         },
       ],
       animationDuration: 1500,
       animationEasingUpdate: "quinticInOut",
       series: [
         {
-          name: "Les Miserables",
+          // name: "Les Miserables",
           type: "graph",
-          layout: "none",
-          data: jsonData.nodes,
-          links: jsonData.links,
-          categories: jsonData.categories,
+          layout: "force",
+          focusNodeAdjacency: true,
+          roam: true,
+          force: {
+            repulsion: 500,
+            edgeLength: [100, 200],
+          },
+          draggable: true,
+          data: linkRelation.nodes,
+          links: linkRelation.links,
+          categories: linkRelation.categories,
           roam: true,
           label: {
             position: "right",
