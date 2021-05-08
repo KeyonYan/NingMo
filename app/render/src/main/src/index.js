@@ -15,6 +15,7 @@ import Graph from "./component/graph";
 import IconMenu from "./component/iconMenu";
 import SplitPane from "react-split-pane";
 import { Container, Row, Col } from "react-bootstrap";
+import { DrapDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { LocalConvenienceStoreOutlined } from "@material-ui/icons";
 // import Hotkeys from "react-hot-keys";
 const { ipcRenderer } = window.require("electron");
@@ -55,6 +56,7 @@ class APP extends React.Component {
     ipcRenderer.on("linkRelation", (event, args) => {
       this.setState({ linkRelation: args });
     });
+    this.refLinkVditor = React.createRef();
   }
 
   handleReadFile = (item) => {
@@ -148,26 +150,29 @@ class APP extends React.Component {
               views[i].addEventListener("click", (event) => {
                 console.log("click111");
                 const element = event.target;
-                const path = element.href;
-                window.open(path);
+                let path = element.href;
+                path = decodeURI(path);
+                path = path.substring(8);
+                console.log("path: ", path);
+                ipcRenderer
+                  .invoke("readFile", { path: path })
+                  .then((result) => {
+                    Vditor.md2html(result).then((data) => {
+                      const node = document.getElementById("linkVditor");
+                      console.log("node: ", node);
+                      console.log("html: ", data);
+                      node.innerHTML = data;
+                    });
+                    // this.refLinkVditor.current.innerHTML = htmlValue;
+                    // node.innerHTML = htmlValue;
+                  });
+                //window.open(path);
                 // TODO
               });
             }
           },
         },
       ],
-      preview: {
-        parse(HTMLElement) {
-          // 预览回调
-          console.log("HTMLElement:" + HTMLElement);
-          return HTMLElement;
-        },
-        transform(string) {
-          // 渲染之前回调
-          console.log("transform string:" + string);
-          return string;
-        },
-      },
       toolbarConfig: {
         hide: true,
       },
@@ -357,7 +362,7 @@ class APP extends React.Component {
       this.editor.setValue(this.state.noteContent);
     }
     return (
-      <React.StrictMode>
+      <div>
         <Container fluid>
           <Row>
             <Col md="auto">
@@ -385,7 +390,14 @@ class APP extends React.Component {
                       <NavBar />
                       <div id="vditor"></div>
                     </div>
-                    <Graph linkRelation={this.state.linkRelation} />
+                    <SplitPane
+                      split="horizontal"
+                      defaultSize={400}
+                      minSize={300}
+                    >
+                      <Graph linkRelation={this.state.linkRelation} />
+                      <div id="linkVditor"></div>
+                    </SplitPane>
                   </SplitPane>
                 </SplitPane>
                 <input id="tempInput"></input>
@@ -393,7 +405,7 @@ class APP extends React.Component {
             </Col>
           </Row>
         </Container>
-      </React.StrictMode>
+      </div>
     );
   }
 }
