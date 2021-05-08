@@ -163,6 +163,43 @@ app.on("ready", () => {
     // 保存item.path路径下的md文件并通知渲染进程
     saveFile(item.path, item.content);
   });
+  ipcMain.handle("openDir", async (event, item) => {
+    db.remove({ type: "treeDir" });
+    db.remove({ type: "linkRelation" });
+
+    dialog
+      .showOpenDialog({
+        title: "请选择目录",
+        properties: ["openDirectory"],
+      })
+      .then((result) => {
+        // get dirTree and send to renderer
+        const path = result.filePaths[0];
+        treeDir = dirTree(path);
+        //console.log(treeDir);
+        win.webContents.send("updateSideBar", treeDir);
+
+        analyseLinkRelation(treeDir);
+        win.webContents.send("linkRelation", linkRelation);
+        var doc = {
+          type: "treeDir",
+          value: treeDir,
+        };
+        db.insert(doc, function (err, newDoc) {
+          console.log("insert treeDir to neDB");
+        });
+        doc = {
+          type: "linkRelation",
+          value: linkRelation,
+        };
+        db.insert(doc, function (err, newDoc) {
+          console.log("insert linkRelation to neDB");
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  });
 
   /* db.find({ type: "treeDir" }, function (err, docs) {
     if (docs.length !== 0) {
@@ -176,40 +213,4 @@ app.on("ready", () => {
       win.webContents.send("linkRelation", docs[0].value);
     }
   }); */
-
-  db.remove({ type: "treeDir" });
-  db.remove({ type: "linkRelation" });
-
-  dialog
-    .showOpenDialog({
-      title: "请选择目录",
-      properties: ["openDirectory"],
-    })
-    .then((result) => {
-      // get dirTree and send to renderer
-      const path = result.filePaths[0];
-      treeDir = dirTree(path);
-      //console.log(treeDir);
-      win.webContents.send("updateSideBar", treeDir);
-
-      analyseLinkRelation(treeDir);
-      win.webContents.send("linkRelation", linkRelation);
-      var doc = {
-        type: "treeDir",
-        value: treeDir,
-      };
-      db.insert(doc, function (err, newDoc) {
-        console.log("insert treeDir to neDB");
-      });
-      doc = {
-        type: "linkRelation",
-        value: linkRelation,
-      };
-      db.insert(doc, function (err, newDoc) {
-        console.log("insert linkRelation to neDB");
-      });
-    })
-    .catch((error) => {
-      console.log(error);
-    });
 });

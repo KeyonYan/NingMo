@@ -69,7 +69,7 @@ class Graph extends Component {
     return (
       <ReactECharts
         option={option}
-        style={{ height: "700px", width: "100%" }}
+        style={{ height: "100%", width: "100%" }}
         onEvents={this.onClick}
       />
     );

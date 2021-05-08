@@ -5,11 +5,16 @@ import reportWebVitals from "./reportWebVitals";
 import Vditor from "vditor";
 // import "~vditor/src/assets/scss/index";
 import "./scss/index.scss";
-import "./resource/vendor/bootstrap/css/bootstrap.min.css";
+import "bootstrap/dist/css/bootstrap.min.css";
+// import "./resource/vendor/bootstrap/css/bootstrap.min.css";
 import "./resource/css/simple-sidebar.css";
+import "./resource/css/split-pane.css";
 import SideBar from "./component/sideBar";
 import NavBar from "./component/navBar";
 import Graph from "./component/graph";
+import IconMenu from "./component/iconMenu";
+import SplitPane from "react-split-pane";
+import { Container, Row, Col } from "react-bootstrap";
 import { LocalConvenienceStoreOutlined } from "@material-ui/icons";
 // import Hotkeys from "react-hot-keys";
 const { ipcRenderer } = window.require("electron");
@@ -73,6 +78,7 @@ class APP extends React.Component {
     let that = this;
     const editor = new Vditor("vditor", {
       height: 800,
+      width: "100%",
       mode: "ir",
       placeholder: "React Vditor",
       toolbar: [
@@ -341,25 +347,53 @@ class APP extends React.Component {
     ipcRenderer.invoke("saveFile", item);
   }
 
+  handleOpenDir = () => {
+    console.log("onClick");
+    ipcRenderer.invoke("openDir");
+  };
+
   render() {
     if (this.editor !== null) {
       this.editor.setValue(this.state.noteContent);
     }
     return (
-      <div className="d-flex" id="wrapper">
-        <SideBar
-          treeDir={this.state.treeDir}
-          onReadFile={this.handleReadFile}
-        />
-        <div id="page-content-wrapper">
-          <NavBar />
-          <div className="container-fluid">
-            <div id="vditor"></div>
-          </div>
-        </div>
-        <Graph linkRelation={this.state.linkRelation} />
-        <input id="tempInput"></input>
-      </div>
+      <React.StrictMode>
+        <Container fluid>
+          <Row>
+            <Col md="auto">
+              <IconMenu onOpenDir={this.handleOpenDir} />
+            </Col>
+            <Col>
+              <div className="d-flex" id="wrapper">
+                <SplitPane
+                  split="vertical"
+                  defaultSize={230}
+                  minSize={230}
+                  maxSize={300}
+                >
+                  <SideBar
+                    treeDir={this.state.treeDir}
+                    onReadFile={this.handleReadFile}
+                  />
+                  <SplitPane
+                    split="vertical"
+                    defaultSize={700}
+                    minSize={300}
+                    maxSize={900}
+                  >
+                    <div id="page-content-wrapper">
+                      <NavBar />
+                      <div id="vditor"></div>
+                    </div>
+                    <Graph linkRelation={this.state.linkRelation} />
+                  </SplitPane>
+                </SplitPane>
+                <input id="tempInput"></input>
+              </div>
+            </Col>
+          </Row>
+        </Container>
+      </React.StrictMode>
     );
   }
 }
