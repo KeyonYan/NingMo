@@ -21,6 +21,7 @@ import { LocalConvenienceStoreOutlined } from "@material-ui/icons";
 const { ipcRenderer } = window.require("electron");
 
 const CLASS_DOUBLELINK = "DoubleLink";
+const CLASS_WEBSITELINK = "WebsiteLink";
 let treeDirArr = [];
 
 function updateTreeDirArr(treeDir) {
@@ -64,7 +65,6 @@ class APP extends React.Component {
       console.log("onClick item is not a file");
       return;
     }
-    console.log("handleClick item:" + item);
     // 通知主进程读取path下的文件并返回其内容
     ipcRenderer.invoke("readFile", item).then((result) => {
       //console.log("readFile' ipcResult:" + result);
@@ -144,11 +144,14 @@ class APP extends React.Component {
             // console.log("saveFile content:", item.content);
             ipcRenderer.invoke("saveFile", item);
             // 双链绑定事件监听器
-            const views = document.getElementsByClassName(CLASS_DOUBLELINK);
-            console.log("views: ", views);
-            for (let i = 0; i < views.length; i++) {
-              views[i].addEventListener("click", (event) => {
-                console.log("click111");
+            const viewsDoubleLink = document.getElementsByClassName(
+              CLASS_DOUBLELINK
+            );
+            const viewsWebSiteLink = document.getElementsByClassName(
+              CLASS_WEBSITELINK
+            );
+            for (let i = 0; i < viewsDoubleLink.length; i++) {
+              viewsDoubleLink[i].addEventListener("click", (event) => {
                 const element = event.target;
                 let path = element.href;
                 path = decodeURI(path);
@@ -159,17 +162,29 @@ class APP extends React.Component {
                   .then((result) => {
                     Vditor.md2html(result).then((data) => {
                       const node = document.getElementById("linkVditor");
-                      console.log("node: ", node);
-                      console.log("html: ", data);
-                      // node.innerHTML = data;
+                      const divView = document.createElement("div");
+                      divView.style.height = "100%";
+                      divView.style.width = "100%";
+                      divView.style.overflow = "auto";
                       node.children[0].innerHTML = path;
-                      node.children[1].innerHTML = data;
+                      divView.innerHTML = data;
+                      node.children[1].innerHTML = "";
+                      node.children[1].appendChild(divView);
                     });
-                    // this.refLinkVditor.current.innerHTML = htmlValue;
-                    // node.innerHTML = htmlValue;
                   });
-                //window.open(path);
-                // TODO
+              });
+            }
+            for (let i = 0; i < viewsWebSiteLink.length; i++) {
+              viewsWebSiteLink[i].addEventListener("click", (event) => {
+                const element = event.target;
+                let iframeView = document.createElement("iframe");
+                iframeView.style.height = "100%";
+                iframeView.style.width = "100%";
+                iframeView.src = element.href;
+                const node = document.getElementById("linkVditor");
+                node.children[0].innerHTML = iframeView.src;
+                node.children[1].innerHTML = "";
+                node.children[1].appendChild(iframeView);
               });
             }
           },
@@ -269,23 +284,20 @@ class APP extends React.Component {
                 if (entering) {
                   return [``, window.Lute.WalkContinue];
                 } else {
-                  if (this.myText !== null) {
-                    if (
-                      this.myText[0] === "[" &&
-                      this.myText[this.myText.length - 1] === "]"
-                    ) {
-                      return [
-                        `<a href='${this.myLink}' my-attr='自定义属性' class="` +
-                          CLASS_DOUBLELINK +
-                          `">${node.Text()}</a>`,
-                        window.Lute.WalkContinue,
-                      ];
-                    }
+                  console.log("renderLink, nodeText: ", node.Text());
+                  const text = node.Text();
+                  if (text[0] === "[" && text[text.length - 1] === "]") {
+                    return [
+                      `<a href='${this.myLink}' class="` +
+                        CLASS_DOUBLELINK +
+                        `">${node.Text()}</a>`,
+                      window.Lute.WalkContinue,
+                    ];
                   } else {
                     return [
-                      `<a href='${
-                        this.myLink
-                      }' my-attr='自定义属性'>${node.Text()}</a>`,
+                      `<a href='${this.myLink}' class="` +
+                        CLASS_WEBSITELINK +
+                        `">${node.Text()}</a>`,
                       window.Lute.WalkContinue,
                     ];
                   }
@@ -300,7 +312,6 @@ class APP extends React.Component {
               },
               renderLinkText: (node, entering) => {
                 if (entering) {
-                  this.myText = node.TokensStr();
                   return ["", window.Lute.WalkContinue];
                 } else {
                   return ["", window.Lute.WalkContinue];
@@ -405,9 +416,9 @@ class APP extends React.Component {
                           <Card.Header></Card.Header>
                           <Card.Body
                             style={{
-                              overflow: "auto",
                               height: "100%",
                               width: "100%",
+                              padding: "0",
                             }}
                           ></Card.Body>
                         </Card>

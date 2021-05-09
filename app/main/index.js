@@ -156,7 +156,7 @@ app.on("ready", () => {
 
   ipcMain.handle("readFile", async (event, item) => {
     // 读取item.path路径下的md文件并返回给渲染进程
-    const result = await readFile(item.path);
+    const result = readFile(item.path);
     return result;
   });
   ipcMain.handle("saveFile", async (event, item) => {
