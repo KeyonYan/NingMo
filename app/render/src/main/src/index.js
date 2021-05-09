@@ -72,6 +72,46 @@ class APP extends React.Component {
     });
   };
 
+  bindLinkEvent = () => {
+    console.log("bindLinkEvent");
+    const viewsDoubleLink = document.getElementsByClassName(CLASS_DOUBLELINK);
+    const viewsWebSiteLink = document.getElementsByClassName(CLASS_WEBSITELINK);
+    for (let i = 0; i < viewsDoubleLink.length; i++) {
+      viewsDoubleLink[i].addEventListener("click", (event) => {
+        const element = event.target;
+        let path = element.href;
+        path = decodeURI(path);
+        path = path.substring(8);
+        ipcRenderer.invoke("readFile", { path: path }).then((result) => {
+          Vditor.md2html(result).then((data) => {
+            const node = document.getElementById("linkVditor");
+            const divView = document.createElement("div");
+            divView.style.height = "100%";
+            divView.style.width = "100%";
+            divView.style.overflow = "auto";
+            node.children[0].innerHTML = path;
+            divView.innerHTML = data;
+            node.children[1].innerHTML = "";
+            node.children[1].appendChild(divView);
+          });
+        });
+      });
+    }
+    for (let i = 0; i < viewsWebSiteLink.length; i++) {
+      viewsWebSiteLink[i].addEventListener("click", (event) => {
+        const element = event.target;
+        let iframeView = document.createElement("iframe");
+        iframeView.style.height = "100%";
+        iframeView.style.width = "100%";
+        iframeView.src = element.href;
+        const node = document.getElementById("linkVditor");
+        node.children[0].innerHTML = iframeView.src;
+        node.children[1].innerHTML = "";
+        node.children[1].appendChild(iframeView);
+      });
+    }
+  };
+
   handleDoubleLinkClick = () => {
     console.log("doublelink click");
   };
@@ -144,49 +184,7 @@ class APP extends React.Component {
             // console.log("saveFile content:", item.content);
             ipcRenderer.invoke("saveFile", item);
             // 双链绑定事件监听器
-            const viewsDoubleLink = document.getElementsByClassName(
-              CLASS_DOUBLELINK
-            );
-            const viewsWebSiteLink = document.getElementsByClassName(
-              CLASS_WEBSITELINK
-            );
-            for (let i = 0; i < viewsDoubleLink.length; i++) {
-              viewsDoubleLink[i].addEventListener("click", (event) => {
-                const element = event.target;
-                let path = element.href;
-                path = decodeURI(path);
-                path = path.substring(8);
-                console.log("path: ", path);
-                ipcRenderer
-                  .invoke("readFile", { path: path })
-                  .then((result) => {
-                    Vditor.md2html(result).then((data) => {
-                      const node = document.getElementById("linkVditor");
-                      const divView = document.createElement("div");
-                      divView.style.height = "100%";
-                      divView.style.width = "100%";
-                      divView.style.overflow = "auto";
-                      node.children[0].innerHTML = path;
-                      divView.innerHTML = data;
-                      node.children[1].innerHTML = "";
-                      node.children[1].appendChild(divView);
-                    });
-                  });
-              });
-            }
-            for (let i = 0; i < viewsWebSiteLink.length; i++) {
-              viewsWebSiteLink[i].addEventListener("click", (event) => {
-                const element = event.target;
-                let iframeView = document.createElement("iframe");
-                iframeView.style.height = "100%";
-                iframeView.style.width = "100%";
-                iframeView.src = element.href;
-                const node = document.getElementById("linkVditor");
-                node.children[0].innerHTML = iframeView.src;
-                node.children[1].innerHTML = "";
-                node.children[1].appendChild(iframeView);
-              });
-            }
+            that.bindLinkEvent();
           },
         },
       ],
@@ -374,6 +372,7 @@ class APP extends React.Component {
     if (this.editor !== null) {
       this.editor.setValue(this.state.noteContent);
     }
+    this.bindLinkEvent();
     return (
       <div>
         <Container fluid>
