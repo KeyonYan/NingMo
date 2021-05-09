@@ -13,8 +13,8 @@ import SideBar from "./component/sideBar";
 import NavBar from "./component/navBar";
 import Graph from "./component/graph";
 import IconMenu from "./component/iconMenu";
-import SplitPane from "react-split-pane";
-import { Container, Row, Col } from "react-bootstrap";
+import SplitPane, { Pane } from "react-split-pane";
+import { Container, Row, Col, Card } from "react-bootstrap";
 import { DrapDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { LocalConvenienceStoreOutlined } from "@material-ui/icons";
 // import Hotkeys from "react-hot-keys";
@@ -161,7 +161,9 @@ class APP extends React.Component {
                       const node = document.getElementById("linkVditor");
                       console.log("node: ", node);
                       console.log("html: ", data);
-                      node.innerHTML = data;
+                      // node.innerHTML = data;
+                      node.children[0].innerHTML = path;
+                      node.children[1].innerHTML = data;
                     });
                     // this.refLinkVditor.current.innerHTML = htmlValue;
                     // node.innerHTML = htmlValue;
@@ -387,16 +389,30 @@ class APP extends React.Component {
                     maxSize={900}
                   >
                     <div id="page-content-wrapper">
-                      <NavBar />
                       <div id="vditor"></div>
                     </div>
                     <SplitPane
                       split="horizontal"
                       defaultSize={400}
                       minSize={300}
+                      style={{ height: "100%", width: "100%" }}
                     >
+                      <div style={{ height: "100%", width: "100%" }}>
+                        <Card
+                          id="linkVditor"
+                          style={{ height: "100%", width: "100%" }}
+                        >
+                          <Card.Header></Card.Header>
+                          <Card.Body
+                            style={{
+                              overflow: "auto",
+                              height: "100%",
+                              width: "100%",
+                            }}
+                          ></Card.Body>
+                        </Card>
+                      </div>
                       <Graph linkRelation={this.state.linkRelation} />
-                      <div id="linkVditor"></div>
                     </SplitPane>
                   </SplitPane>
                 </SplitPane>
