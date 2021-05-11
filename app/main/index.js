@@ -15,7 +15,12 @@ let linkRelation = {
 let nodeIndex = 1;
 
 function readFile(path) {
-  const data = fs.readFileSync(path, "utf-8");
+  let data = "";
+  if (fs.existsSync(path)) {
+    data = fs.readFileSync(path, "utf-8");
+  } else {
+    console.log("readFile Error, path: ", path);
+  }
   return data;
 }
 

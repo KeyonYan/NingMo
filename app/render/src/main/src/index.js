@@ -23,18 +23,19 @@ const { ipcRenderer } = window.require("electron");
 
 const CLASS_DOUBLELINK = "DoubleLink";
 const CLASS_WEBSITELINK = "WebsiteLink";
-let treeDirArr = [];
+let mdFileArray = [];
 
-function updateTreeDirArr(treeDir) {
+function getMdFileArray(treeDir) {
+  // 调用前记得清空 mdFileArray
   if (treeDir === null) return;
   if (treeDir.children === null) return;
   if (treeDir.children.length === 0) return;
   for (let i in treeDir.children) {
     if (treeDir.children[i].type === "directory") {
-      updateTreeDirArr(treeDir.children[i]);
+      getMdFileArray(treeDir.children[i]);
     }
     if (treeDir.children[i].extension === ".md") {
-      treeDirArr.push(treeDir.children[i]);
+      mdFileArray.push(treeDir.children[i]);
     }
   }
 }
@@ -55,6 +56,8 @@ class APP extends React.Component {
     ipcRenderer.on("updateSideBar", (event, args) => {
       //console.log("args:" + args);
       this.setState({ treeDir: args });
+      mdFileArray = [];
+      getMdFileArray(this.state.treeDir);
     });
     ipcRenderer.on("linkRelation", (event, args) => {
       this.setState({ linkRelation: args });
@@ -74,48 +77,84 @@ class APP extends React.Component {
     });
   };
 
+  handleDoubleLinkClick = (event) => {
+    console.log("click dlink");
+    if (event.stopPropagation) {
+      event.stopPropagation();
+    }
+    const element = event.target.parentNode;
+    // let path = element.href;
+    console.log("element: ", element);
+    let path = element.getElementsByClassName(
+      "vditor-ir__marker vditor-ir__marker--link"
+    )[0].innerHTML;
+    console.log("path: ", path);
+    // path = decodeURI(path);
+    // path = path.substring(8);
+    ipcRenderer.invoke("readFile", { path: path }).then((result) => {
+      Vditor.md2html(result).then((data) => {
+        const node = document.getElementById("linkVditor");
+        const divView = document.createElement("div");
+        divView.style.height = "100%";
+        divView.style.width = "100%";
+        divView.style.overflow = "auto";
+        node.children[0].innerHTML = path;
+        divView.innerHTML = data;
+        node.children[1].innerHTML = "";
+        node.children[1].appendChild(divView);
+      });
+    });
+  };
+
+  handleWebSiteLinkClick = (event) => {
+    console.log("click link");
+    if (event.stopPropagation) {
+      event.stopPropagation();
+    }
+    const element = event.target;
+    let iframeView = document.createElement("iframe");
+    iframeView.style.height = "100%";
+    iframeView.style.width = "100%";
+    if (element.href === null || element.href === "") {
+      iframeView.src = "";
+    } else {
+      let result = element.href.match(
+        /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_\+.~#?&\/\/=]*)/g
+      );
+      if (result === null || result.length === 0) {
+        iframeView.src = "";
+      } else {
+        iframeView.src = element.href;
+      }
+    }
+
+    const node = document.getElementById("linkVditor");
+    node.children[0].innerHTML = iframeView.src;
+    node.children[1].innerHTML = "";
+    node.children[1].appendChild(iframeView);
+  };
+
   bindLinkEvent = () => {
     console.log("bindLinkEvent");
     const viewsDoubleLink = document.getElementsByClassName(CLASS_DOUBLELINK);
     const viewsWebSiteLink = document.getElementsByClassName(CLASS_WEBSITELINK);
     for (let i = 0; i < viewsDoubleLink.length; i++) {
-      viewsDoubleLink[i].addEventListener("click", (event) => {
-        const element = event.target;
-        let path = element.href;
-        path = decodeURI(path);
-        path = path.substring(8);
-        ipcRenderer.invoke("readFile", { path: path }).then((result) => {
-          Vditor.md2html(result).then((data) => {
-            const node = document.getElementById("linkVditor");
-            const divView = document.createElement("div");
-            divView.style.height = "100%";
-            divView.style.width = "100%";
-            divView.style.overflow = "auto";
-            node.children[0].innerHTML = path;
-            divView.innerHTML = data;
-            node.children[1].innerHTML = "";
-            node.children[1].appendChild(divView);
-          });
-        });
-      });
+      viewsDoubleLink[i].removeEventListener(
+        "click",
+        this.handleDoubleLinkClick
+      );
+      viewsDoubleLink[i].addEventListener("click", this.handleDoubleLinkClick);
     }
     for (let i = 0; i < viewsWebSiteLink.length; i++) {
-      viewsWebSiteLink[i].addEventListener("click", (event) => {
-        const element = event.target;
-        let iframeView = document.createElement("iframe");
-        iframeView.style.height = "100%";
-        iframeView.style.width = "100%";
-        iframeView.src = element.href;
-        const node = document.getElementById("linkVditor");
-        node.children[0].innerHTML = iframeView.src;
-        node.children[1].innerHTML = "";
-        node.children[1].appendChild(iframeView);
-      });
+      viewsWebSiteLink[i].removeEventListener(
+        "click",
+        this.handleWebSiteLinkClick
+      );
+      viewsWebSiteLink[i].addEventListener(
+        "click",
+        this.handleWebSiteLinkClick
+      );
     }
-  };
-
-  handleDoubleLinkClick = () => {
-    console.log("doublelink click");
   };
 
   createEditor = () => {
@@ -125,6 +164,9 @@ class APP extends React.Component {
       width: "100%",
       mode: "ir",
       placeholder: "React Vditor",
+      counter: {
+        enable: true,
+      },
       toolbar: [
         "emoji",
         "headings",
@@ -178,6 +220,7 @@ class APP extends React.Component {
             console.log("save");
             // 发送至主进程并告知保存
             that.setState({ noteContent: that.editor.getValue() });
+            console.log("that.editor.getValue(): ", that.editor.getValue());
             var item = {
               path: that.state.notePath,
               content: that.state.noteContent,
@@ -202,9 +245,10 @@ class APP extends React.Component {
           {
             key: "@",
             hint: (key) => {
-              updateTreeDirArr(that.state.treeDir);
+              console.log("key: ", key);
+              console.log("mdFileArray: ", mdFileArray);
               let pageList = [];
-              for (let item of treeDirArr) {
+              for (let item of mdFileArray) {
                 if (item.extension === ".md") {
                   pageList.push({
                     value:
@@ -222,11 +266,11 @@ class APP extends React.Component {
               }
               let popupShowList = [];
               for (let pageItem of pageList) {
-                if (pageItem.html.indexOf(key.toLocaleLowerCase()) > -1) {
+                if (pageItem.html.search(key) > -1) {
                   popupShowList.push(pageItem);
                 }
               }
-
+              console.log("popupShowList: ", popupShowList);
               return popupShowList;
             },
           },
@@ -268,18 +312,14 @@ class APP extends React.Component {
       },
       after() {
         // 编辑器异步渲染完成后的回调方法
-        console.log("after() call");
+        // 图片渲染逻辑: renderImage -> renderBang -> renderLink
+        // 链接渲染逻辑: renderLink -> renderOpenBracket ->
+        // renderLinkText -> renderCloseBracket -> renderOpenParen
+        // renderLinkDest -> renderCloseParen
         that.editor.vditor.lute.SetJSRenderers({
           renderers: {
             Md2VditorIRDOM: {
               // 请根据不同的模式选择不同的渲染对象
-              renderLinkDest: (node, entering) => {
-                if (entering) {
-                  this.myLink = node.TokensStr();
-                  return [``, window.Lute.WalkContinue];
-                }
-                return [``, window.Lute.WalkContinue];
-              },
               renderLink: (node, entering) => {
                 if (entering) {
                   return [``, window.Lute.WalkContinue];
@@ -288,16 +328,24 @@ class APP extends React.Component {
                   const text = node.Text();
                   if (text[0] === "[" && text[text.length - 1] === "]") {
                     return [
-                      `<a href='${this.myLink}' class="` +
-                        CLASS_DOUBLELINK +
-                        `">${node.Text()}</a>`,
+                      `<span data-type="a" class="vditor-ir__node ${CLASS_DOUBLELINK}">` +
+                        `<span class="vditor-ir__marker vditor-ir__marker--bracket">[</span>` +
+                        `<span class="vditor-ir__link">${node.Text()}</span>` +
+                        `<span class="vditor-ir__marker vditor-ir__marker--bracket">]</span>` +
+                        `<span class="vditor-ir__marker vditor-ir__marker--paren">(</span>` +
+                        `<span class="vditor-ir__marker vditor-ir__marker--link">${this.myLink}</span>` +
+                        `<span class="vditor-ir__marker vditor-ir__marker--paren">)</span></span>`,
                       window.Lute.WalkContinue,
                     ];
                   } else {
                     return [
-                      `<a href='${this.myLink}' class="` +
-                        CLASS_WEBSITELINK +
-                        `">${node.Text()}</a>`,
+                      `<span data-type="a" class="vditor-ir__node ${CLASS_WEBSITELINK}">` +
+                        `<span class="vditor-ir__marker vditor-ir__marker--bracket">[</span>` +
+                        `<span class="vditor-ir__link">${node.Text()}</span>` +
+                        `<span class="vditor-ir__marker vditor-ir__marker--bracket">]</span>` +
+                        `<span class="vditor-ir__marker vditor-ir__marker--paren">(</span>` +
+                        `<span class="vditor-ir__marker vditor-ir__marker--link">${this.myLink}</span>` +
+                        `<span class="vditor-ir__marker vditor-ir__marker--paren">)</span></span>`,
                       window.Lute.WalkContinue,
                     ];
                   }
@@ -331,7 +379,39 @@ class APP extends React.Component {
                   return ["", window.Lute.WalkContinue];
                 }
               },
+              renderLinkDest: (node, entering) => {
+                if (entering) {
+                  this.myLink = node.TokensStr();
+                  return ["", window.Lute.WalkContinue];
+                }
+                return ["", window.Lute.WalkContinue];
+              },
               renderCloseParen: (node, entering) => {
+                if (entering) {
+                  return ["", window.Lute.WalkContinue];
+                } else {
+                  return ["", window.Lute.WalkContinue];
+                }
+              },
+              renderImage: (node, entering) => {
+                if (entering) {
+                  return ["", window.Lute.WalkContinue];
+                } else {
+                  return [
+                    `<span class="vditor-ir__node" data-type="img">` +
+                      `<span class="vditor-ir__marker">!</span>` +
+                      `<span class="vditor-ir__marker vditor-ir__marker--bracket">[</span>` +
+                      `<span class="vditor-ir__marker vditor-ir__marker--bracket">${node.Text()}</span>` +
+                      `<span class="vditor-ir__marker vditor-ir__marker--bracket">]</span>` +
+                      `<span class="vditor-ir__marker vditor-ir__marker--paren">(</span>` +
+                      `<span class="vditor-ir__marker vditor-ir__marker--link">${this.myLink}</span>` +
+                      `<span class="vditor-ir__marker vditor-ir__marker--paren">)</span>` +
+                      `<img src="${this.myLink}" alt="${node.Text()}"></span>`,
+                    window.Lute.WalkContinue,
+                  ];
+                }
+              },
+              renderBang: (node, entering) => {
                 if (entering) {
                   return ["", window.Lute.WalkContinue];
                 } else {
