@@ -12,9 +12,10 @@ import "./resource/css/split-pane.css";
 import SideBar from "./component/sideBar";
 import NavBar from "./component/navBar";
 import Graph from "./component/graph";
-import IconMenu from "./component/iconMenu";
 import SplitPane, { Pane } from "react-split-pane";
-import { Container, Row, Col, Card } from "react-bootstrap";
+import IconMenu from "./component/iconMenu";
+import { Container, Row, Col, Card, Modal } from "react-bootstrap";
+import SearchModal from "./component/searchModal";
 import { DrapDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { LocalConvenienceStoreOutlined } from "@material-ui/icons";
 // import Hotkeys from "react-hot-keys";
@@ -44,6 +45,7 @@ class APP extends React.Component {
     noteContent: "",
     notePath: "",
     linkRelation: "",
+    modalShow: false,
   };
   editor = null;
 
@@ -200,7 +202,7 @@ class APP extends React.Component {
           {
             key: "@",
             hint: (key) => {
-              updateTreeDirArr(this.state.treeDir);
+              updateTreeDirArr(that.state.treeDir);
               let pageList = [];
               for (let item of treeDirArr) {
                 if (item.extension === ".md") {
@@ -264,10 +266,10 @@ class APP extends React.Component {
           document.execCommand("Paste");
         }
       },
-      after: () => {
+      after() {
         // 编辑器异步渲染完成后的回调方法
         console.log("after() call");
-        this.editor.vditor.lute.SetJSRenderers({
+        that.editor.vditor.lute.SetJSRenderers({
           renderers: {
             Md2VditorIRDOM: {
               // 请根据不同的模式选择不同的渲染对象
@@ -340,7 +342,7 @@ class APP extends React.Component {
           },
         });
 
-        editor.setValue(this.state.noteContent);
+        that.editor.setValue(that.state.noteContent);
       },
     });
     return editor;
@@ -364,8 +366,13 @@ class APP extends React.Component {
   }
 
   handleOpenDir = () => {
-    console.log("onClick");
+    console.log("handleOpenDir");
     ipcRenderer.invoke("openDir");
+  };
+
+  handleSearchModal = () => {
+    console.log("handleSearchModal");
+    this.setState({ modalShow: true });
   };
 
   render() {
@@ -378,7 +385,10 @@ class APP extends React.Component {
         <Container fluid>
           <Row>
             <Col md="auto">
-              <IconMenu onOpenDir={this.handleOpenDir} />
+              <IconMenu
+                onOpenDir={this.handleOpenDir}
+                onSearch={this.handleSearchModal}
+              />
             </Col>
             <Col>
               <div className="d-flex" id="wrapper">
@@ -431,6 +441,10 @@ class APP extends React.Component {
             </Col>
           </Row>
         </Container>
+        <SearchModal
+          show={this.state.modalShow}
+          onHide={() => this.setState({ modalShow: false })}
+        />
       </div>
     );
   }

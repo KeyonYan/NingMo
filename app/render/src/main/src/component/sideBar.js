@@ -43,18 +43,15 @@ class SideBar extends React.Component {
     for (let i in this.props.treeDir.children) {
       treeDirArr.push(this.props.treeDir.children[i]);
     }
-    // console.log("renderStart");
     return (
       <div className="bg-light border-right" id="sidebar-wrapper">
-        <div className="sidebar-heading">New Page</div>
+        <div className="sidebar-heading"> </div>
         <TreeView
           className="treeview"
           defaultCollapseIcon={<ExpandMoreIcon />}
           defaultExpandIcon={<ChevronRightIcon />}
         >
           {treeDirArr.map((item) => {
-            //console.log("render index:" + nodeIdIndex);
-            //console.log("render item: " + item);
             nodeIdIndex = nodeIdIndex + 1;
             if (item.type === "directory") {
               return (
@@ -64,8 +61,6 @@ class SideBar extends React.Component {
                   label={item.name}
                 >
                   {item.children.map((item) => {
-                    // console.log("render index:" + nodeIdIndex);
-                    // console.log("render item: " + item);
                     nodeIdIndex = nodeIdIndex + 1;
                     if (item.type === "directory") {
                       return (

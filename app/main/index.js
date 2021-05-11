@@ -26,6 +26,9 @@ function saveFile(path, content) {
 
 // 解析当前目录下所有文件的链接关系
 function analyseLinkRelation(treeDir) {
+  linkRelation.nodes = [];
+  linkRelation.links = [];
+  linkRelation.categories = [];
   findCategories(treeDir.children);
   findNode(treeDir.children, treeDir.name);
   findLink();
@@ -144,6 +147,7 @@ app.on("ready", () => {
     height: 600,
     webPreferences: {
       nodeIntegration: true,
+      webSecurity: false,
     },
   });
   if (isDev) {
@@ -162,6 +166,8 @@ app.on("ready", () => {
   ipcMain.handle("saveFile", async (event, item) => {
     // 保存item.path路径下的md文件并通知渲染进程
     saveFile(item.path, item.content);
+    analyseLinkRelation(treeDir);
+    win.webContents.send("linkRelation", linkRelation);
   });
   ipcMain.handle("openDir", async (event, item) => {
     db.remove({ type: "treeDir" });
