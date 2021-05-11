@@ -13,6 +13,7 @@ class SearchModal extends Component {
         path: "E:\\Page2",
       },
     ],
+    listKey: 1,
   };
   constructor(props) {
     super(props);
@@ -42,7 +43,7 @@ class SearchModal extends Component {
           <ListGroup>
             {this.state.pageList.map((item) => {
               return (
-                <ListGroup.Item action>
+                <ListGroup.Item action key={this.state.listKey++}>
                   {item.name} - {item.path}
                 </ListGroup.Item>
               );

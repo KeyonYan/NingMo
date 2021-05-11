@@ -111,20 +111,24 @@ class APP extends React.Component {
     if (event.stopPropagation) {
       event.stopPropagation();
     }
-    const element = event.target;
+    const element = event.target.parentNode;
+    console.log("element: ", element);
+    let url = element.getElementsByClassName(
+      "vditor-ir__marker vditor-ir__marker--link"
+    )[0].innerHTML;
     let iframeView = document.createElement("iframe");
     iframeView.style.height = "100%";
     iframeView.style.width = "100%";
-    if (element.href === null || element.href === "") {
+    if (url === null || url === "") {
       iframeView.src = "";
     } else {
-      let result = element.href.match(
+      let result = url.match(
         /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()!@:%_\+.~#?&\/\/=]*)/g
       );
       if (result === null || result.length === 0) {
         iframeView.src = "";
       } else {
-        iframeView.src = element.href;
+        iframeView.src = url;
       }
     }
 
@@ -278,7 +282,7 @@ class APP extends React.Component {
       },
       input(data) {
         console.log("input() call");
-        const editorView = document.activeElement;
+        /* const editorView = document.activeElement;
         const selection = window.getSelection();
         let range = selection.getRangeAt(0); // 记录当前光标位置，之后用
         const lastChar = data[data.length - 2];
@@ -308,7 +312,7 @@ class APP extends React.Component {
 
           // 粘贴内容
           document.execCommand("Paste");
-        }
+        } */
       },
       after() {
         // 编辑器异步渲染完成后的回调方法
@@ -322,11 +326,16 @@ class APP extends React.Component {
               // 请根据不同的模式选择不同的渲染对象
               renderLink: (node, entering) => {
                 if (entering) {
+                  console.log("renderLink in");
                   return [``, window.Lute.WalkContinue];
                 } else {
+                  // debug: BUG
+                  console.log("renderLink out");
                   console.log("renderLink, nodeText: ", node.Text());
+                  console.log("this.myLink: ", this.myLink);
                   const text = node.Text();
                   if (text[0] === "[" && text[text.length - 1] === "]") {
+                    console.log("isDoubleLink");
                     return [
                       `<span data-type="a" class="vditor-ir__node ${CLASS_DOUBLELINK}">` +
                         `<span class="vditor-ir__marker vditor-ir__marker--bracket">[</span>` +
@@ -338,6 +347,7 @@ class APP extends React.Component {
                       window.Lute.WalkContinue,
                     ];
                   } else {
+                    console.log("isWebLink");
                     return [
                       `<span data-type="a" class="vditor-ir__node ${CLASS_WEBSITELINK}">` +
                         `<span class="vditor-ir__marker vditor-ir__marker--bracket">[</span>` +
@@ -353,50 +363,67 @@ class APP extends React.Component {
               },
               renderOpenBracket: (node, entering) => {
                 if (entering) {
+                  console.log("renderOpenBracket in");
                   return ["", window.Lute.WalkContinue];
                 } else {
+                  console.log("renderOpenBracket out");
                   return ["", window.Lute.WalkContinue];
                 }
               },
               renderLinkText: (node, entering) => {
                 if (entering) {
+                  console.log("renderLinkText in");
                   return ["", window.Lute.WalkContinue];
                 } else {
+                  console.log("renderLinkText out");
                   return ["", window.Lute.WalkContinue];
                 }
               },
               renderCloseBracket: (node, entering) => {
                 if (entering) {
+                  console.log("renderCloseBracket in");
                   return ["", window.Lute.WalkContinue];
                 } else {
+                  console.log("renderCloseBracket out");
                   return ["", window.Lute.WalkContinue];
                 }
               },
               renderOpenParen: (node, entering) => {
                 if (entering) {
+                  console.log("renderOpenParen in");
                   return ["", window.Lute.WalkContinue];
                 } else {
+                  console.log("renderOpenParen out");
                   return ["", window.Lute.WalkContinue];
                 }
               },
               renderLinkDest: (node, entering) => {
                 if (entering) {
+                  console.log("renderLinkDest in");
+                  return ["", window.Lute.WalkContinue];
+                } else {
                   this.myLink = node.TokensStr();
+                  console.log("renderLinkDest out");
+                  console.log("renderLink, node TokensStr: ", node.TokensStr());
+                  console.log("this.myLink: ", this.myLink);
                   return ["", window.Lute.WalkContinue];
                 }
-                return ["", window.Lute.WalkContinue];
               },
               renderCloseParen: (node, entering) => {
                 if (entering) {
+                  console.log("renderCloseParen in");
                   return ["", window.Lute.WalkContinue];
                 } else {
+                  console.log("renderCloseParen out");
                   return ["", window.Lute.WalkContinue];
                 }
               },
               renderImage: (node, entering) => {
                 if (entering) {
+                  console.log("renderImage in");
                   return ["", window.Lute.WalkContinue];
                 } else {
+                  console.log("renderImage out");
                   return [
                     `<span class="vditor-ir__node" data-type="img">` +
                       `<span class="vditor-ir__marker">!</span>` +
@@ -413,8 +440,10 @@ class APP extends React.Component {
               },
               renderBang: (node, entering) => {
                 if (entering) {
+                  console.log("renderBang in");
                   return ["", window.Lute.WalkContinue];
                 } else {
+                  console.log("renderBang out");
                   return ["", window.Lute.WalkContinue];
                 }
               },
