@@ -12,7 +12,7 @@
     &[data-type="yaml-front-matter"]:after,
     &[data-type="math-block"]:before,
     &[data-type="math-block"]:after {
-      content: ' ';
+      content: " ";
       color: var(--second-color);
     }
 
@@ -96,17 +96,17 @@
 
       &[data-type="code-block"]:before,
       &[data-type="code-block"]:after {
-        content: '```';
+        content: "```";
       }
 
       &[data-type="yaml-front-matter"]:before,
       &[data-type="yaml-front-matter"]:after {
-        content: '---';
+        content: "---";
       }
 
       &[data-type="math-block"]:before,
       &[data-type="math-block"]:after {
-        content: '$$';
+        content: "$$";
       }
     }
 
@@ -128,6 +128,10 @@
 
   &__link {
     color: var(--ir-bracket-color);
+    text-decoration: underline;
+  }
+  &__link_DoubleLink {
+    color: var(--ir-dlink-bracket-color);
     text-decoration: underline;
   }
 
@@ -179,7 +183,7 @@
   h4:empty::after,
   h5:empty::after,
   h6:empty::after {
-    content: ' ';
+    content: " ";
   }
 
   // block title
@@ -195,30 +199,30 @@
     float: left;
     padding-right: 4px;
     margin-left: -29px;
-    content: 'H1';
+    content: "H1";
     font-size: 0.85rem;
     font-weight: normal;
     color: var(--second-color);
   }
 
   & .vditor-reset > h2:before {
-    content: 'H2';
+    content: "H2";
   }
 
   & .vditor-reset > h3:before {
-    content: 'H3';
+    content: "H3";
   }
 
   & .vditor-reset > h4:before {
-    content: 'H4';
+    content: "H4";
   }
 
   & .vditor-reset > h5:before {
-    content: 'H5';
+    content: "H5";
   }
 
   & .vditor-reset > h6:before {
-    content: 'H6';
+    content: "H6";
   }
 
   div[data-type="link-ref-defs-block"] {
@@ -231,7 +235,7 @@
 
   div[data-type="footnotes-block"] {
     &:before {
-      content: '^F';
+      content: "^F";
     }
 
     border-top: 2px solid var(--heading-border-color);
@@ -239,12 +243,17 @@
     margin-top: 24px;
 
     & > div[data-type="footnotes-def"] {
-      & > ul, & > ol, & > p, & > blockquote, & > pre, & > table, & > hr {
+      & > ul,
+      & > ol,
+      & > p,
+      & > blockquote,
+      & > pre,
+      & > table,
+      & > hr {
         margin-left: 8px;
       }
     }
   }
-
 
   .vditor-toc {
     &:before {

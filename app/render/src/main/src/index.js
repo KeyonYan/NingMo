@@ -339,7 +339,7 @@ class APP extends React.Component {
                     return [
                       `<span data-type="a" class="vditor-ir__node ${CLASS_DOUBLELINK}">` +
                         `<span class="vditor-ir__marker vditor-ir__marker--bracket">[</span>` +
-                        `<span class="vditor-ir__link">${node.Text()}</span>` +
+                        `<span class="vditor-ir__link_${CLASS_DOUBLELINK}">${node.Text()}</span>` +
                         `<span class="vditor-ir__marker vditor-ir__marker--bracket">]</span>` +
                         `<span class="vditor-ir__marker vditor-ir__marker--paren">(</span>` +
                         `<span class="vditor-ir__marker vditor-ir__marker--link">${this.myLink}</span>` +
