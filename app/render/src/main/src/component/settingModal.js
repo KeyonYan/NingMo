@@ -22,7 +22,7 @@ class SettingModal extends Component {
             ⚙ Settings
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body>Content</Modal.Body>
+        <Modal.Body>写一些用户自定义配置</Modal.Body>
       </Modal>
     );
   }
