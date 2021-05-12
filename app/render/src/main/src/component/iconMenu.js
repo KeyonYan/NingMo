@@ -25,7 +25,12 @@ class IconMenu extends React.Component {
           >
             <VscFolderOpened size={30} />
           </Button>
-          <Button variant="light" size="sm" style={{ marginTop: "10px" }}>
+          <Button
+            variant="light"
+            size="sm"
+            style={{ marginTop: "10px" }}
+            onClick={() => this.props.onGraphShow()}
+          >
             <Image src={graphIcon} />
           </Button>
           <Button
@@ -36,7 +41,12 @@ class IconMenu extends React.Component {
           >
             <VscSearch size={30} />
           </Button>
-          <Button variant="light" size="sm" style={{ marginTop: "10px" }}>
+          <Button
+            variant="light"
+            size="sm"
+            style={{ marginTop: "10px" }}
+            onClick={() => this.props.onSettingShow()}
+          >
             <VscSettings size={30} />
           </Button>
         </ButtonGroup>

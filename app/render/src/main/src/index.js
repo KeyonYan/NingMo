@@ -47,6 +47,7 @@ class APP extends React.Component {
     notePath: "",
     linkRelation: "",
     modalShow: false,
+    graphShow: true,
   };
   editor = null;
 
@@ -484,6 +485,22 @@ class APP extends React.Component {
     this.setState({ modalShow: true });
   };
 
+  handleGraphShow = () => {
+    const element = document.getElementsByClassName("split-linkVditor-graph")[0]
+      .children[0];
+    if (this.state.graphShow) {
+      element.style.height = "100%";
+      this.state.graphShow = false;
+    } else {
+      element.style.height = "50%";
+      this.state.graphShow = true;
+    }
+  };
+
+  handleSettingShow = () => {
+    console.log("handleSettingShow");
+  };
+
   render() {
     if (this.editor !== null) {
       this.editor.setValue(this.state.noteContent);
@@ -497,33 +514,38 @@ class APP extends React.Component {
               <IconMenu
                 onOpenDir={this.handleOpenDir}
                 onSearch={this.handleSearchModal}
+                onGraphShow={this.handleGraphShow}
+                onSettingShow={this.handleSettingShow}
               />
             </Col>
             <Col>
               <div className="d-flex" id="wrapper">
                 <SplitPane
+                  className="split-sidebar-vditor"
                   split="vertical"
-                  defaultSize={230}
-                  minSize={230}
-                  maxSize={300}
+                  defaultSize="15%"
+                  minSize={0}
+                  maxSize={400}
                 >
                   <SideBar
                     treeDir={this.state.treeDir}
                     onReadFile={this.handleReadFile}
                   />
                   <SplitPane
+                    className="split-vditor-right"
                     split="vertical"
-                    defaultSize={700}
-                    minSize={300}
-                    maxSize={900}
+                    defaultSize="60%"
+                    minSize={350}
+                    maxSize={800}
                   >
                     <div id="page-content-wrapper">
                       <div id="vditor"></div>
                     </div>
                     <SplitPane
+                      className="split-linkVditor-graph"
                       split="horizontal"
-                      defaultSize={400}
-                      minSize={300}
+                      defaultSize="50%"
+                      minSize={200}
                       style={{ height: "100%", width: "100%" }}
                     >
                       <div style={{ height: "100%", width: "100%" }}>
