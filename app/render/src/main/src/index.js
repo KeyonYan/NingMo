@@ -16,6 +16,7 @@ import SplitPane, { Pane } from "react-split-pane";
 import IconMenu from "./component/iconMenu";
 import { Container, Row, Col, Card, Modal } from "react-bootstrap";
 import SearchModal from "./component/searchModal";
+import SettingModal from "./component/settingModal";
 import { DrapDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { LocalConvenienceStoreOutlined } from "@material-ui/icons";
 // import Hotkeys from "react-hot-keys";
@@ -47,6 +48,7 @@ class APP extends React.Component {
     notePath: "",
     linkRelation: "",
     modalShow: false,
+    settingShow: false,
     graphShow: true,
   };
   editor = null;
@@ -499,6 +501,7 @@ class APP extends React.Component {
 
   handleSettingShow = () => {
     console.log("handleSettingShow");
+    this.setState({ settingShow: true });
   };
 
   render() {
@@ -575,6 +578,10 @@ class APP extends React.Component {
         <SearchModal
           show={this.state.modalShow}
           onHide={() => this.setState({ modalShow: false })}
+        />
+        <SettingModal
+          show={this.state.settingShow}
+          onHide={() => this.setState({ settingShow: false })}
         />
       </div>
     );
