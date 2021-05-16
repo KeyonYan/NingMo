@@ -21,11 +21,16 @@ class SearchModal extends Component {
   }
 
   handleChange(event) {
-    console.log("event: ", event);
-    this.setState({ searchValue: event.target.value });
-    console.log(event.target.value);
+    console.log("handleChange");
+    const key = event.target.value;
+    this.setState({ searchValue: key });
   }
+
   render() {
+    let searchResultArr = [];
+    for (let i in this.props.searchResult) {
+      searchResultArr.push(this.props.searchResult[i]);
+    }
     return (
       <Modal
         {...this.props}
@@ -44,16 +49,24 @@ class SearchModal extends Component {
               </InputGroup.Prepend>
               <FormControl
                 placeholder="Search"
-                onChange={this.handleChange.bind(this)}
+                value={this.state.searchValue}
+                onChange={(event) => {
+                  this.handleChange(event);
+                  this.props.onSearch(event);
+                }}
               />
             </InputGroup>
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <ListGroup>
-            {this.state.pageList.map((item) => {
+            {searchResultArr.map((item) => {
               return (
-                <ListGroup.Item action key={this.state.listKey++}>
+                <ListGroup.Item
+                  action
+                  key={this.state.listKey++}
+                  onClick={() => this.props.onReadFile(item)}
+                >
                   {item.name} - {item.path}
                 </ListGroup.Item>
               );

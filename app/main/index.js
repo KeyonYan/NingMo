@@ -7,12 +7,15 @@ const fs = require("fs");
 var Datastore = require("nedb");
 var db = new Datastore({ filename: "data.db", autoload: true });
 let treeDir = null;
+// 知识图谱关系网数据结构
 let linkRelation = {
   nodes: [],
   links: [],
   categories: [],
 };
 let nodeIndex = 1;
+// 全文搜索数据源
+let notesContent = [];
 
 function readFile(path) {
   let data = "";
@@ -81,6 +84,7 @@ function insertNode(path, rootFolder) {
   }
   let categoriesIndex = findCategoriesIndexByName(categories);
   if (categoriesIndex === -1) categoriesIndex = 0;
+  // linkRelation.nodes 数据结构
   linkRelation.nodes.push({
     id: nodeIndex.toString(),
     name: res[res.length - 1],
@@ -100,6 +104,12 @@ function findLink() {
   linkRelation.nodes.map((node) => {
     // console.log("node: ", node);
     const fileContent = readFile(node.path);
+    // 解析时顺便将笔记内容存储在notesContent，做全文搜索用。
+    notesContent.push({
+      name: node.name,
+      path: node.path,
+      content: fileContent,
+    });
     const regRes = fileContent.match(/\[{2}.*?\]{2}\(.*?\)/g);
     if (regRes === null || regRes.length === 0) {
       // console.log("link not found in node: ", node.path);
@@ -146,6 +156,20 @@ function findNodeByPath(path) {
   // return linkRelation.nodes.find((item) => item.path === path);
 }
 
+function searchGlobal(key) {
+  console.log("key: ", key);
+  if (notesContent.length === 0) return [];
+  // TODO search
+  let result = [];
+  notesContent.map((item) => {
+    result.push({
+      name: item.name,
+      path: item.path,
+    });
+  });
+  return result;
+}
+
 app.on("ready", () => {
   let win = new BrowserWindow({
     width: 800,
@@ -173,6 +197,11 @@ app.on("ready", () => {
     saveFile(item.path, item.content);
     analyseLinkRelation(treeDir);
     win.webContents.send("linkRelation", linkRelation);
+  });
+  ipcMain.handle("searchGlobal", async (event, item) => {
+    console.log("searchGlobal");
+    // 搜索算法
+    return searchGlobal(item);
   });
   ipcMain.handle("openDir", async (event, item) => {
     db.remove({ type: "treeDir" });

@@ -37,7 +37,7 @@ class IconMenu extends React.Component {
             variant="light"
             size="sm"
             style={{ marginTop: "10px" }}
-            onClick={() => this.props.onSearch()}
+            onClick={() => this.props.onSearchShow()}
           >
             <VscSearch size={30} />
           </Button>

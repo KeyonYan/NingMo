@@ -47,9 +47,10 @@ class APP extends React.Component {
     noteContent: "",
     notePath: "",
     linkRelation: "",
-    modalShow: false,
-    settingShow: false,
+    searchModalShow: false,
+    settingModalShow: false,
     graphShow: true,
+    searchResult: [],
   };
   editor = null;
 
@@ -69,7 +70,7 @@ class APP extends React.Component {
   }
 
   handleReadFile = (item) => {
-    if (item.type !== "file") {
+    if (item.type != null && item.type !== "file") {
       console.log("onClick item is not a file");
       return;
     }
@@ -78,6 +79,9 @@ class APP extends React.Component {
       //console.log("readFile' ipcResult:" + result);
       this.setState({ noteContent: result, notePath: item.path });
     });
+    if (this.state.searchModalShow) {
+      this.setState({ searchModalShow: false });
+    }
   };
 
   handleDoubleLinkClick = (event) => {
@@ -484,7 +488,7 @@ class APP extends React.Component {
 
   handleSearchModal = () => {
     console.log("handleSearchModal");
-    this.setState({ modalShow: true });
+    this.setState({ searchModalShow: true });
   };
 
   handleGraphShow = () => {
@@ -501,7 +505,15 @@ class APP extends React.Component {
 
   handleSettingShow = () => {
     console.log("handleSettingShow");
-    this.setState({ settingShow: true });
+    this.setState({ settingModalShow: true });
+  };
+
+  handleSearch = (event) => {
+    const key = event.target.value;
+    ipcRenderer.invoke("searchGlobal", key).then((result) => {
+      console.log("searchGlobal' ipcResult:" + JSON.stringify(result));
+      this.setState({ searchResult: result });
+    });
   };
 
   render() {
@@ -516,7 +528,7 @@ class APP extends React.Component {
             <Col md="auto">
               <IconMenu
                 onOpenDir={this.handleOpenDir}
-                onSearch={this.handleSearchModal}
+                onSearchShow={this.handleSearchModal}
                 onGraphShow={this.handleGraphShow}
                 onSettingShow={this.handleSettingShow}
               />
@@ -576,12 +588,15 @@ class APP extends React.Component {
           </Row>
         </Container>
         <SearchModal
-          show={this.state.modalShow}
-          onHide={() => this.setState({ modalShow: false })}
+          show={this.state.searchModalShow}
+          onHide={() => this.setState({ searchModalShow: false })}
+          onSearch={this.handleSearch}
+          searchResult={this.state.searchResult}
+          onReadFile={this.handleReadFile}
         />
         <SettingModal
-          show={this.state.settingShow}
-          onHide={() => this.setState({ settingShow: false })}
+          show={this.state.settingModalShow}
+          onHide={this.handleSearch}
         />
       </div>
     );
