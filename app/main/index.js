@@ -196,6 +196,7 @@ app.on("ready", () => {
           type: "treeDir",
           value: treeDir,
         };
+
         db.insert(doc, function (err, newDoc) {
           console.log("insert treeDir to neDB");
         });

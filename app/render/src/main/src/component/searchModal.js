@@ -13,10 +13,17 @@ class SearchModal extends Component {
         path: "E:\\Page2",
       },
     ],
+    searchValue: "",
     listKey: 1,
   };
   constructor(props) {
     super(props);
+  }
+
+  handleChange(event) {
+    console.log("event: ", event);
+    this.setState({ searchValue: event.target.value });
+    console.log(event.target.value);
   }
   render() {
     return (
@@ -35,7 +42,10 @@ class SearchModal extends Component {
               <InputGroup.Prepend>
                 <InputGroup.Text id="basic-addon1">🔍</InputGroup.Text>
               </InputGroup.Prepend>
-              <FormControl placeholder="Search" />
+              <FormControl
+                placeholder="Search"
+                onChange={this.handleChange.bind(this)}
+              />
             </InputGroup>
           </Modal.Title>
         </Modal.Header>

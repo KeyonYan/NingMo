@@ -44,6 +44,7 @@ class Graph extends Component {
             repulsion: 500,
             edgeLength: [100, 200],
           },
+          edgeSymbol: ["none", "arrow"],
           draggable: true,
           data: linkRelation.nodes,
           links: linkRelation.links,
@@ -54,6 +55,9 @@ class Graph extends Component {
             formatter: "{b}",
           },
           lineStyle: {
+            type: "solid",
+            cap: "round",
+            join: "bevel",
             color: "source",
             curveness: 0.3,
           },
