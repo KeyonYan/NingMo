@@ -4,6 +4,7 @@ const path = require("path");
 const dialog = require("electron").dialog;
 const dirTree = require("../common/directory-tree");
 const fs = require("fs");
+const elasticsearch = require("elasticsearch");
 var Datastore = require("nedb");
 var db = new Datastore({ filename: "data.db", autoload: true });
 let treeDir = null;
@@ -14,8 +15,13 @@ let linkRelation = {
   categories: [],
 };
 let nodeIndex = 1;
-// 全文搜索数据源
-let notesContent = [];
+// elasticsearch
+const ESINDEX = "ningmoindex";
+const ESTYPE = "_doc";
+const ESClient = new elasticsearch.Client({
+  host: "127.0.0.1:9200",
+  log: "error",
+});
 
 function readFile(path) {
   let data = "";
@@ -104,12 +110,23 @@ function findLink() {
   linkRelation.nodes.map((node) => {
     // console.log("node: ", node);
     const fileContent = readFile(node.path);
-    // 解析时顺便将笔记内容存储在notesContent，做全文搜索用。
-    notesContent.push({
-      name: node.name,
-      path: node.path,
-      content: fileContent,
-    });
+    // 解析时顺便将笔记内容存储在elasticsearch，做全文搜索用。
+    ESClient.index(
+      {
+        index: ESINDEX,
+        type: ESTYPE,
+        body: {
+          name: node.name,
+          path: node.path,
+          content: fileContent,
+        },
+      },
+      (error, response) => {
+        if (error) {
+          console.log("ES error: ", error);
+        }
+      }
+    );
     const regRes = fileContent.match(/\[{2}.*?\]{2}\(.*?\)/g);
     if (regRes === null || regRes.length === 0) {
       // console.log("link not found in node: ", node.path);
@@ -156,20 +173,6 @@ function findNodeByPath(path) {
   // return linkRelation.nodes.find((item) => item.path === path);
 }
 
-function searchGlobal(key) {
-  console.log("key: ", key);
-  if (notesContent.length === 0) return [];
-  // TODO search
-  let result = [];
-  notesContent.map((item) => {
-    result.push({
-      name: item.name,
-      path: item.path,
-    });
-  });
-  return result;
-}
-
 app.on("ready", () => {
   let win = new BrowserWindow({
     width: 800,
@@ -186,6 +189,10 @@ app.on("ready", () => {
     // 生产环境
     win.loadFile(path.resolve(__dirname, "../render/pages/main/index.html"));
   }
+  // initial es
+  ESClient.indices.delete({
+    index: ESINDEX,
+  });
 
   ipcMain.handle("readFile", async (event, item) => {
     // 读取item.path路径下的md文件并返回给渲染进程
@@ -197,11 +204,6 @@ app.on("ready", () => {
     saveFile(item.path, item.content);
     analyseLinkRelation(treeDir);
     win.webContents.send("linkRelation", linkRelation);
-  });
-  ipcMain.handle("searchGlobal", async (event, item) => {
-    console.log("searchGlobal");
-    // 搜索算法
-    return searchGlobal(item);
   });
   ipcMain.handle("openDir", async (event, item) => {
     db.remove({ type: "treeDir" });

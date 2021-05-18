@@ -21,6 +21,14 @@ import { DrapDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { LocalConvenienceStoreOutlined } from "@material-ui/icons";
 // import Hotkeys from "react-hot-keys";
 const { ipcRenderer } = window.require("electron");
+// elasticsearch
+const elasticsearch = require("elasticsearch");
+const ESINDEX = "ningmoindex";
+const ESTYPE = "_doc";
+const ESClient = new elasticsearch.Client({
+  host: "127.0.0.1:9200",
+  log: "error",
+});
 
 const CLASS_DOUBLELINK = "DoubleLink";
 const CLASS_WEBSITELINK = "WebsiteLink";
@@ -508,12 +516,37 @@ class APP extends React.Component {
     this.setState({ settingModalShow: true });
   };
 
+  // elasticsearch
   handleSearch = (event) => {
     const key = event.target.value;
-    ipcRenderer.invoke("searchGlobal", key).then((result) => {
-      console.log("searchGlobal' ipcResult:" + JSON.stringify(result));
-      this.setState({ searchResult: result });
-    });
+    const that = this;
+    ESClient.search(
+      {
+        index: ESINDEX,
+        type: ESTYPE,
+        body: {
+          query: {
+            multi_match: {
+              query: key,
+              type: "best_fields",
+              tie_breaker: 0.03,
+              fields: ["name", "content"],
+            },
+          },
+        },
+      },
+      function (error, response) {
+        if (error) {
+          console.log("ES error: ", error);
+          that.state.searchReesult = [];
+          that.setState({ searchResult: [] });
+        } else {
+          console.log("ES search result: ", response);
+          that.state.searchResult = [];
+          that.setState({ searchResult: response.hits.hits });
+        }
+      }
+    );
   };
 
   render() {
