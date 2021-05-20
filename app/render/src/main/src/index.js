@@ -14,7 +14,7 @@ import NavBar from "./component/navBar";
 import Graph from "./component/graph";
 import SplitPane, { Pane } from "react-split-pane";
 import IconMenu from "./component/iconMenu";
-import { Container, Row, Col, Card, Modal } from "react-bootstrap";
+import { Container, Row, Col, Card } from "react-bootstrap";
 import SearchModal from "./component/searchModal";
 import SettingModal from "./component/settingModal";
 import { DrapDropContext, Droppable, Draggable } from "react-beautiful-dnd";
@@ -51,9 +51,10 @@ function getMdFileArray(treeDir) {
 
 class APP extends React.Component {
   state = {
-    treeDir: "",
+    treeDir: [],
     noteContent: "",
     notePath: "",
+    noteName: "",
     linkRelation: "",
     searchModalShow: false,
     settingModalShow: false,
@@ -75,6 +76,16 @@ class APP extends React.Component {
       this.setState({ linkRelation: args });
     });
     this.refLinkVditor = React.createRef();
+    ipcRenderer.on("showNewPage", (event, args) => {
+      console.log("showNewPage");
+      const splits = args.split("\\");
+
+      this.setState({
+        noteContent: "",
+        notePath: args,
+        noteName: splits[splits.length - 1],
+      });
+    });
   }
 
   handleReadFile = (item) => {
@@ -85,7 +96,12 @@ class APP extends React.Component {
     // 通知主进程读取path下的文件并返回其内容
     ipcRenderer.invoke("readFile", item).then((result) => {
       //console.log("readFile' ipcResult:" + result);
-      this.setState({ noteContent: result, notePath: item.path });
+      const splits = item.path.split("\\");
+      this.setState({
+        noteContent: result,
+        notePath: item.path,
+        noteName: splits[splits.length - 1],
+      });
     });
     if (this.state.searchModalShow) {
       this.setState({ searchModalShow: false });
@@ -494,6 +510,14 @@ class APP extends React.Component {
     ipcRenderer.invoke("openDir");
   };
 
+  handleNewPage = () => {
+    console.log("handleNewPage");
+    if (this.state.treeDir === null || this.state.treeDir.length === 0) {
+      return;
+    }
+    ipcRenderer.invoke("newPage");
+  };
+
   handleSearchModal = () => {
     console.log("handleSearchModal");
     this.setState({ searchModalShow: true });
@@ -549,6 +573,29 @@ class APP extends React.Component {
     );
   };
 
+  handleFileNameSaveChange = () => {
+    const that = this;
+    let splits = this.state.notePath.split("\\");
+    let newPath = "";
+    for (var i = 0; i < splits.length - 1; i++) {
+      newPath += splits[i] + "\\";
+    }
+    newPath += this.state.noteName;
+    ipcRenderer
+      .invoke("changeFileName", {
+        oldPath: this.state.notePath,
+        newPath: newPath,
+      })
+      .then((result) => {
+        console.log("result: ", result);
+        that.setState({
+          notePath: newPath,
+          treeDir: result.treeDir,
+          linkRelation: result.linkRelation,
+        });
+      });
+  };
+
   render() {
     if (this.editor !== null) {
       this.editor.setValue(this.state.noteContent);
@@ -561,8 +608,9 @@ class APP extends React.Component {
             <Col md="auto">
               <IconMenu
                 onOpenDir={this.handleOpenDir}
-                onSearchShow={this.handleSearchModal}
+                onNewPage={this.handleNewPage}
                 onGraphShow={this.handleGraphShow}
+                onSearchShow={this.handleSearchModal}
                 onSettingShow={this.handleSettingShow}
               />
             </Col>
@@ -587,6 +635,13 @@ class APP extends React.Component {
                     maxSize={800}
                   >
                     <div id="page-content-wrapper">
+                      <NavBar
+                        noteName={this.state.noteName}
+                        onFileNameChange={(event) => {
+                          this.setState({ noteName: event.target.value });
+                        }}
+                        onFileNameSaveChange={this.handleFileNameSaveChange}
+                      />
                       <div id="vditor"></div>
                     </div>
                     <SplitPane
@@ -629,7 +684,7 @@ class APP extends React.Component {
         />
         <SettingModal
           show={this.state.settingModalShow}
-          onHide={this.handleSearch}
+          onHide={() => this.setState({ settingModalShow: false })}
         />
       </div>
     );

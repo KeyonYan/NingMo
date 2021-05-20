@@ -8,6 +8,7 @@ const elasticsearch = require("elasticsearch");
 var Datastore = require("nedb");
 var db = new Datastore({ filename: "data.db", autoload: true });
 let treeDir = null;
+let rootPath = "";
 // 知识图谱关系网数据结构
 let linkRelation = {
   nodes: [],
@@ -173,6 +174,28 @@ function findNodeByPath(path) {
   // return linkRelation.nodes.find((item) => item.path === path);
 }
 
+function updateTreeDir(dirArray, oldPath, newPath) {
+  if (dirArray === null) return;
+  for (var i in dirArray) {
+    if (dirArray[i].type === "directory") {
+      updateTreeDir(dirArray[i].children);
+    } else if (dirArray[i].type === "file" && dirArray[i].path === oldPath) {
+      dirArray[i].path = newPath;
+      return;
+    }
+  }
+}
+
+function updateLinkRelation(oldPath, newPath) {
+  for (var i = 0; i < linkRelation.nodes.length; i++) {
+    if (linkRelation.nodes[i].path === path) {
+      linkRelation.nodes[i].path = newPath;
+      return;
+    }
+  }
+  return;
+}
+
 app.on("ready", () => {
   let win = new BrowserWindow({
     width: 800,
@@ -216,8 +239,8 @@ app.on("ready", () => {
       })
       .then((result) => {
         // get dirTree and send to renderer
-        const path = result.filePaths[0];
-        treeDir = dirTree(path);
+        rootPath = result.filePaths[0];
+        treeDir = dirTree(rootPath);
         //console.log(treeDir);
         win.webContents.send("updateSideBar", treeDir);
 
@@ -243,7 +266,42 @@ app.on("ready", () => {
         console.log(error);
       });
   });
-
+  ipcMain.handle("newPage", async (event, item) => {
+    dialog
+      .showOpenDialog({
+        title: "新建文件",
+        properties: ["openDirectory"],
+      })
+      .then((result) => {
+        console.log("showOpenDialog: ", result);
+        const path = result.filePaths[0] + "\\Untitled.md";
+        fs.writeFileSync(path, "", "utf-8");
+        win.webContents.send("showNewPage", path);
+        treeDir = dirTree(rootPath);
+        win.webContents.send("updateSideBar", treeDir);
+        analyseLinkRelation(treeDir);
+        win.webContents.send("linkRelation", linkRelation);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  });
+  ipcMain.handle("changeFileName", async (event, item) => {
+    // console.log("item: ", item);
+    fs.renameSync(item.oldPath, item.newPath, function (err) {
+      if (err) {
+        throw Error("changeFileName error");
+      }
+    });
+    //updateTreeDir(treeDir, item.oldPath, item.newPath);
+    //updateLinkRelation(item.oldPath, item.newPath);
+    treeDir = dirTree(rootPath);
+    analyseLinkRelation(treeDir);
+    return {
+      treeDir: treeDir,
+      linkRelation: linkRelation,
+    };
+  });
   /* db.find({ type: "treeDir" }, function (err, docs) {
     if (docs.length !== 0) {
       console.log("treeDir from DB: ", docs[0].value);

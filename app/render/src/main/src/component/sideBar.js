@@ -1,18 +1,15 @@
 import React from "react";
-import ReactDOM from "react-dom";
 import "../resource/vendor/bootstrap/css/bootstrap.min.css";
 import "../resource/css/simple-sidebar.css";
-import { makeStyles } from "@material-ui/core/styles";
 import TreeView from "@material-ui/lab/TreeView";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import ChevronRightIcon from "@material-ui/icons/ChevronRight";
 import TreeItem from "@material-ui/lab/TreeItem";
-const { ipcRenderer } = window.require("electron");
+// import { Treebeard } from "react-treebeard";
 let nodeIdIndex = 1;
 
 class SideBar extends React.Component {
   state = {};
-
   /* renderTreeItems = (treeDirArr) =>
     treeDirArr.map((item) => {
       console.log("render index:" + nodeIdIndex);
@@ -37,6 +34,13 @@ class SideBar extends React.Component {
         />
       );
     }); */
+  /* componentDidMount() {
+    document.addEventListener("contextmenu", this._handleContextMenu);
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener("contextmenu", this._handleContextMenu);
+  } */
 
   render() {
     let treeDirArr = [];

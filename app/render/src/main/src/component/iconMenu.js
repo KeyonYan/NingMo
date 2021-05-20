@@ -1,9 +1,13 @@
 import React, { Component } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { Button, ButtonGroup, Image } from "react-bootstrap";
-import pageIcon from "../resource/icons/page.png";
 import graphIcon from "../resource/icons/graph.png";
-import { VscFolderOpened, VscSettings, VscSearch } from "react-icons/vsc";
+import {
+  VscFolderOpened,
+  VscNewFile,
+  VscSearch,
+  VscSettings,
+} from "react-icons/vsc";
 // import '../resource/vendor/bootstrap/css/bootstrap.min.css';
 class IconMenu extends React.Component {
   render() {
@@ -24,6 +28,14 @@ class IconMenu extends React.Component {
             onClick={() => this.props.onOpenDir()}
           >
             <VscFolderOpened size={30} />
+          </Button>
+          <Button
+            variant="light"
+            size="sm"
+            style={{ marginTop: "10px" }}
+            onClick={() => this.props.onNewPage()}
+          >
+            <VscNewFile size={30} />
           </Button>
           <Button
             variant="light"
