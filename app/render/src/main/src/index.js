@@ -596,6 +596,11 @@ class APP extends React.Component {
       });
   };
 
+  handleFileDelete = () => {
+    ipcRenderer.invoke("deleteFile", this.state.notePath);
+    this.setState({ noteContent: "", notePath: "", noteName: "" });
+  };
+
   render() {
     if (this.editor !== null) {
       this.editor.setValue(this.state.noteContent);
@@ -641,6 +646,7 @@ class APP extends React.Component {
                           this.setState({ noteName: event.target.value });
                         }}
                         onFileNameSaveChange={this.handleFileNameSaveChange}
+                        onDelete={this.handleFileDelete}
                       />
                       <div id="vditor"></div>
                     </div>

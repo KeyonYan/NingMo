@@ -29,7 +29,7 @@ function readFile(path) {
   if (fs.existsSync(path)) {
     data = fs.readFileSync(path, "utf-8");
   } else {
-    console.log("readFile Error, path: ", path);
+    throw Error("readFile Error, path: ", path);
   }
   return data;
 }
@@ -288,11 +288,16 @@ app.on("ready", () => {
   });
   ipcMain.handle("changeFileName", async (event, item) => {
     // console.log("item: ", item);
-    fs.renameSync(item.oldPath, item.newPath, function (err) {
-      if (err) {
-        throw Error("changeFileName error");
-      }
-    });
+    if (fs.existsSync(path)) {
+      fs.renameSync(item.oldPath, item.newPath, function (err) {
+        if (err) {
+          throw Error("changeFileName error");
+        }
+      });
+    } else {
+      throw Error("readFile Error, path: ", path);
+    }
+
     //updateTreeDir(treeDir, item.oldPath, item.newPath);
     //updateLinkRelation(item.oldPath, item.newPath);
     treeDir = dirTree(rootPath);
@@ -301,6 +306,17 @@ app.on("ready", () => {
       treeDir: treeDir,
       linkRelation: linkRelation,
     };
+  });
+  ipcMain.handle("deleteFile", async (event, path) => {
+    if (fs.existsSync(path)) {
+      fs.unlinkSync(path);
+      treeDir = dirTree(rootPath);
+      win.webContents.send("updateSideBar", treeDir);
+      analyseLinkRelation(treeDir);
+      win.webContents.send("linkRelation", linkRelation);
+    } else {
+      throw Error("readFile Error, path: ", path);
+    }
   });
   /* db.find({ type: "treeDir" }, function (err, docs) {
     if (docs.length !== 0) {
