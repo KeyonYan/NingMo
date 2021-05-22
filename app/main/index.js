@@ -229,37 +229,46 @@ app.on("ready", () => {
     win.webContents.send("linkRelation", linkRelation);
   });
   ipcMain.handle("openDir", async (event, item) => {
-    db.remove({ type: "treeDir" });
-    db.remove({ type: "linkRelation" });
-
     dialog
       .showOpenDialog({
         title: "请选择目录",
         properties: ["openDirectory"],
       })
       .then((result) => {
-        // get dirTree and send to renderer
-        rootPath = result.filePaths[0];
-        treeDir = dirTree(rootPath);
-        //console.log(treeDir);
-        win.webContents.send("updateSideBar", treeDir);
-
-        analyseLinkRelation(treeDir);
-        win.webContents.send("linkRelation", linkRelation);
-        var doc = {
-          type: "treeDir",
-          value: treeDir,
-        };
-
-        db.insert(doc, function (err, newDoc) {
-          console.log("insert treeDir to neDB");
-        });
-        doc = {
-          type: "linkRelation",
-          value: linkRelation,
-        };
-        db.insert(doc, function (err, newDoc) {
-          console.log("insert linkRelation to neDB");
+        // 读取数据库已有数据
+        // 数据库结构：
+        // {
+        //   rootpath: 唯一
+        //   treeDir:
+        //   linkRelation:
+        // }
+        let rootPath = result.filePaths[0];
+        db.find({ rootpath: rootPath }, function (err, docs) {
+          if (docs.length !== 0) {
+            console.log("database found data");
+            treeDir = docs[0].treeDir;
+            linkRelation = docs[0].linkRelation;
+            win.webContents.send("updateSideBar", treeDir);
+            win.webContents.send("linkRelation", linkRelation);
+          } else {
+            console.log("database not found data");
+            // 目录解析
+            rootPath = result.filePaths[0];
+            treeDir = dirTree(rootPath);
+            win.webContents.send("updateSideBar", treeDir);
+            // 知识图谱解析
+            analyseLinkRelation(treeDir);
+            win.webContents.send("linkRelation", linkRelation);
+            // 存入数据库
+            let doc = {
+              rootpath: rootPath,
+              treeDir: treeDir,
+              linkRelation: linkRelation,
+            };
+            db.insert(doc, function (err, newDoc) {
+              console.log("insert data to neDB");
+            });
+          }
         });
       })
       .catch((error) => {
@@ -318,16 +327,8 @@ app.on("ready", () => {
       throw Error("readFile Error, path: ", path);
     }
   });
-  /* db.find({ type: "treeDir" }, function (err, docs) {
-    if (docs.length !== 0) {
-      console.log("treeDir from DB: ", docs[0].value);
-      win.webContents.send("updateSideBar", docs[0].value);
-    }
+  ipcMain.handle("clearDatabase", async (event, path) => {
+    // 清空数据库
+    db.remove({ rootpath: path });
   });
-  db.find({ type: "linkRelation" }, function (err, docs) {
-    if (docs.length !== 0) {
-      console.log("linkRelation from DB: ", docs[0].value);
-      win.webContents.send("linkRelation", docs[0].value);
-    }
-  }); */
 });
