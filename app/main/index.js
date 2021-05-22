@@ -330,5 +330,6 @@ app.on("ready", () => {
   ipcMain.handle("clearDatabase", async (event, path) => {
     // 清空数据库
     db.remove({ rootpath: path });
+    console.log("clearDatabase");
   });
 });

@@ -601,6 +601,10 @@ class APP extends React.Component {
     this.setState({ noteContent: "", notePath: "", noteName: "" });
   };
 
+  handleClearDatabase = () => {
+    ipcRenderer.invoke("clearDatabase", this.state.treeDir.path);
+  };
+
   render() {
     if (this.editor !== null) {
       this.editor.setValue(this.state.noteContent);
@@ -691,6 +695,7 @@ class APP extends React.Component {
         <SettingModal
           show={this.state.settingModalShow}
           onHide={() => this.setState({ settingModalShow: false })}
+          onClearDatabase={this.handleClearDatabase}
         />
       </div>
     );

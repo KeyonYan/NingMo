@@ -1,8 +1,16 @@
 import React, { Component } from "react";
-import { Modal, InputGroup, FormControl, ListGroup } from "react-bootstrap";
+import {
+  Modal,
+  InputGroup,
+  FormControl,
+  ListGroup,
+  Button,
+} from "react-bootstrap";
 
 class SettingModal extends Component {
-  state = {};
+  state = {
+    isClear: false,
+  };
   constructor(props) {
     super(props);
   }
@@ -22,7 +30,25 @@ class SettingModal extends Component {
             ⚙ Settings
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body>写一些用户自定义配置</Modal.Body>
+        <Modal.Body>
+          {this.state.isClear ? (
+            <Button variant="success" disabled>
+              🗑 清空完毕
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              onClick={(event) => {
+                this.props.onClearDatabase(event);
+                if (!this.state.isClear) {
+                  this.setState({ isClear: true });
+                }
+              }}
+            >
+              🗑 缓存清空
+            </Button>
+          )}
+        </Modal.Body>
       </Modal>
     );
   }
