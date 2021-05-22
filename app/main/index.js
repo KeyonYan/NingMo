@@ -41,6 +41,7 @@ function saveFile(path, content) {
 
 // 解析当前目录下所有文件的链接关系
 function analyseLinkRelation(treeDir) {
+  console.log("analyseLinkRelation");
   linkRelation.nodes = [];
   linkRelation.links = [];
   linkRelation.categories = [];
@@ -109,25 +110,7 @@ function findLink() {
     return;
   }
   linkRelation.nodes.map((node) => {
-    // console.log("node: ", node);
     const fileContent = readFile(node.path);
-    // 解析时顺便将笔记内容存储在elasticsearch，做全文搜索用。
-    ESClient.index(
-      {
-        index: ESINDEX,
-        type: ESTYPE,
-        body: {
-          name: node.name,
-          path: node.path,
-          content: fileContent,
-        },
-      },
-      (error, response) => {
-        if (error) {
-          console.log("ES error: ", error);
-        }
-      }
-    );
     const regRes = fileContent.match(/\[{2}.*?\]{2}\(.*?\)/g);
     if (regRes === null || regRes.length === 0) {
       // console.log("link not found in node: ", node.path);
@@ -196,6 +179,47 @@ function updateLinkRelation(oldPath, newPath) {
   return;
 }
 
+function clearESIndex() {
+  ESClient.deleteByQuery({
+    index: "ningmoindex",
+    type: "_doc",
+    body: {
+      query: {
+        match_all: {},
+      },
+    },
+  });
+}
+
+function initESIndex() {
+  if (linkRelation.nodes.length === 0) {
+    console.log("initESIndex Error");
+    return;
+  }
+  clearESIndex();
+  linkRelation.nodes.map((node) => {
+    // console.log("node: ", node);
+    const fileContent = readFile(node.path);
+    // 解析时顺便将笔记内容存储在elasticsearch，做全文搜索用。
+    ESClient.index(
+      {
+        index: ESINDEX,
+        type: ESTYPE,
+        body: {
+          name: node.name,
+          path: node.path,
+          content: fileContent,
+        },
+      },
+      (error, response) => {
+        if (error) {
+          console.log("ES error: ", error);
+        }
+      }
+    );
+  });
+}
+
 app.on("ready", () => {
   let win = new BrowserWindow({
     width: 800,
@@ -213,9 +237,9 @@ app.on("ready", () => {
     win.loadFile(path.resolve(__dirname, "../render/pages/main/index.html"));
   }
   // initial es
-  ESClient.indices.delete({
+  /* ESClient.indices.delete({
     index: ESINDEX,
-  });
+  }); */
 
   ipcMain.handle("readFile", async (event, item) => {
     // 读取item.path路径下的md文件并返回给渲染进程
@@ -226,6 +250,7 @@ app.on("ready", () => {
     // 保存item.path路径下的md文件并通知渲染进程
     saveFile(item.path, item.content);
     analyseLinkRelation(treeDir);
+    initESIndex();
     win.webContents.send("linkRelation", linkRelation);
   });
   ipcMain.handle("openDir", async (event, item) => {
@@ -269,6 +294,7 @@ app.on("ready", () => {
               console.log("insert data to neDB");
             });
           }
+          initESIndex();
         });
       })
       .catch((error) => {
@@ -290,6 +316,7 @@ app.on("ready", () => {
         win.webContents.send("updateSideBar", treeDir);
         analyseLinkRelation(treeDir);
         win.webContents.send("linkRelation", linkRelation);
+        initESIndex();
       })
       .catch((error) => {
         console.log(error);
@@ -311,6 +338,7 @@ app.on("ready", () => {
     //updateLinkRelation(item.oldPath, item.newPath);
     treeDir = dirTree(rootPath);
     analyseLinkRelation(treeDir);
+    initESIndex();
     return {
       treeDir: treeDir,
       linkRelation: linkRelation,
@@ -323,6 +351,7 @@ app.on("ready", () => {
       win.webContents.send("updateSideBar", treeDir);
       analyseLinkRelation(treeDir);
       win.webContents.send("linkRelation", linkRelation);
+      initESIndex();
     } else {
       throw Error("readFile Error, path: ", path);
     }
@@ -330,6 +359,7 @@ app.on("ready", () => {
   ipcMain.handle("clearDatabase", async (event, path) => {
     // 清空数据库
     db.remove({ rootpath: path });
-    console.log("clearDatabase");
+    clearESIndex();
+    console.log("clear Database and ESIndex");
   });
 });

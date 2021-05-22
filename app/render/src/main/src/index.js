@@ -360,7 +360,6 @@ class APP extends React.Component {
                   console.log("renderLink in");
                   return [``, window.Lute.WalkContinue];
                 } else {
-                  // debug: BUG
                   console.log("renderLink out");
                   console.log("renderLink, nodeText: ", node.Text());
                   console.log("this.myLink: ", this.myLink);
@@ -553,7 +552,7 @@ class APP extends React.Component {
             multi_match: {
               query: key,
               type: "best_fields",
-              tie_breaker: 0.03,
+              tie_breaker: 0.9,
               fields: ["name", "content"],
             },
           },
